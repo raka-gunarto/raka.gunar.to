@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Dead Letters</title>
+		<link rel="icon" href="/raka.gunar.to/favicon.ico" type="image/x-icon">
+
+		<!-- Google tag (gtag.js) -->
+		<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-H9QR43SSJG"></script>
+		
+		<meta name="description" content="Out of band thinking">
+		<link rel="alternate" href="/raka.gunar.to/feed/feed.xml" type="application/atom+xml" title="Dead Letters">
+		
+		
+		
+		<style>/* This is an arbitrary CSS string added to the bundle */
+/* Defaults */
+:root {
+	--font-family: -apple-system, system-ui, sans-serif;
+	--font-family-monospace: Consolas, Menlo, Monaco, Andale Mono WT, Andale Mono, Lucida Console, Lucida Sans Typewriter, DejaVu Sans Mono, Bitstream Vera Sans Mono, Liberation Mono, Nimbus Mono L, Courier New, Courier, monospace;
+}
+
+/* Theme colors */
+:root {
+	--color-gray-20: #e0e0e0;
+	--color-gray-50: #C0C0C0;
+	--color-gray-90: #333;
+
+	--background-color: #fff;
+
+	--text-color: var(--color-gray-90);
+	--text-color-link: #fa8072;
+	--text-color-link-active: #e9967a;
+	--text-color-link-visited: #cd5c5c;
+
+	--syntax-tab-size: 2;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--color-gray-20: #e0e0e0;
+		--color-gray-50: #C0C0C0;
+		--color-gray-90: #dad8d8;
+
+		/* --text-color is assigned to --color-gray-_ above */
+		--text-color-link: #fa8072;
+		--text-color-link-active: #ffa07a;
+		--text-color-link-visited: #e9967a;
+
+		--background-color: #15202b;
+	}
+}
+
+
+/* Global stylesheet */
+* {
+	box-sizing: border-box;
+}
+
+@view-transition {
+	navigation: auto;
+}
+
+html,
+body {
+	padding: 0;
+	margin: 0 auto;
+	font-family: var(--font-family);
+	color: var(--text-color);
+	background-color: var(--background-color);
+}
+html {
+	overflow-y: scroll;
+}
+body {
+	max-width: 40em;
+}
+
+/* https://www.a11yproject.com/posts/how-to-hide-content/ */
+.visually-hidden:not(:focus):not(:active) {
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	height: 1px;
+	overflow: hidden;
+	position: absolute;
+	white-space: nowrap;
+	width: 1px;
+}
+
+/* Fluid images via https://www.zachleat.com/web/fluid-images/ */
+img{
+  max-width: 100%;
+}
+img[width][height] {
+  height: auto;
+}
+img[src$=".svg"] {
+  width: 100%;
+  height: auto;
+  max-width: none;
+}
+video,
+iframe {
+	width: 100%;
+	height: auto;
+}
+iframe {
+	aspect-ratio: 16/9;
+}
+
+p:last-child {
+	margin-bottom: 0;
+}
+p {
+	line-height: 1.5;
+}
+
+li {
+	line-height: 1.5;
+}
+
+a[href] {
+	color: var(--text-color-link);
+}
+a[href]:visited {
+	color: var(--text-color-link-visited);
+}
+a[href]:hover,
+a[href]:active {
+	color: var(--text-color-link-active);
+}
+
+main,
+footer {
+	padding: 1rem;
+}
+main :first-child {
+	margin-top: 0;
+}
+
+header {
+	border-bottom: 1px dashed var(--color-gray-20);
+}
+
+#skip-link {
+	text-decoration: none;
+	background: var(--background-color);
+	color: var(--text-color);
+	padding: 0.5rem 1rem;
+	border: 1px solid var(--color-gray-90);
+	border-radius: 2px;
+}
+
+/* Prevent visually-hidden skip link fom pushing content around when focused */
+#skip-link.visually-hidden:focus {
+	position: absolute;
+	top: 1rem;
+	left: 1rem;
+	/* Ensure it is positioned on top of everything else when it is shown */
+	z-index: 999;
+}
+
+.links-nextprev {
+	display: flex;
+	justify-content: space-between;
+	gap: .5em 1em;
+	list-style: "";
+	border-top: 1px dashed var(--color-gray-20);
+	padding: 1em 0;
+}
+.links-nextprev > * {
+	flex-grow: 1;
+}
+.links-nextprev-next {
+	text-align: right;
+}
+
+table {
+	margin: 1em 0;
+}
+table td,
+table th {
+	padding-right: 1em;
+}
+
+pre,
+code {
+	font-family: var(--font-family-monospace);
+}
+pre:not([class*="language-"]) {
+	margin: .5em 0;
+	line-height: 1.375; /* 22px /16 */
+	-moz-tab-size: var(--syntax-tab-size);
+	-o-tab-size: var(--syntax-tab-size);
+	tab-size: var(--syntax-tab-size);
+	-webkit-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+	direction: ltr;
+	text-align: left;
+	white-space: pre;
+	word-spacing: normal;
+	word-break: normal;
+	overflow-x: auto;
+}
+code {
+	word-break: break-all;
+}
+
+/* Header */
+header {
+	display: flex;
+	gap: 1em;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1em;
+}
+.home-link {
+	flex-grow: 1;
+	font-size: 1em; /* 16px /16 */
+	font-weight: 700;
+}
+.home-link:link:not(:hover) {
+	text-decoration: none;
+}
+
+/* Nav */
+.nav {
+	display: flex;
+	gap: .5em 1em;
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+.nav-item {
+	display: inline-block;
+}
+.nav-item a[href]:not(:hover) {
+	text-decoration: none;
+}
+.nav a[href][aria-current="page"] {
+	text-decoration: underline;
+}
+
+/* Posts list */
+.postlist {
+	counter-reset: start-from var(--postlist-index);
+	list-style: none;
+	padding: 0;
+	padding-left: 1.5rem;
+}
+.postlist-item {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	counter-increment: start-from -1;
+	margin-bottom: 1em;
+}
+.postlist-item:before {
+	display: inline-block;
+	pointer-events: none;
+	content: "" counter(start-from, decimal-leading-zero) ". ";
+	line-height: 100%;
+	text-align: right;
+	margin-left: -1.5rem;
+}
+.postlist-date,
+.postlist-item:before {
+	font-size: 0.8125em; /* 13px /16 */
+	color: var(--color-gray-90);
+}
+.postlist-date {
+	word-spacing: -0.5px;
+}
+.postlist-link {
+	font-size: 1.1875em; /* 19px /16 */
+	font-weight: 700;
+	flex-basis: calc(100% - 1.5rem);
+	padding-left: .25em;
+	padding-right: .5em;
+	text-underline-position: from-font;
+	text-underline-offset: 0;
+	text-decoration-thickness: 1px;
+}
+.postlist-item-active .postlist-link {
+	font-weight: bold;
+}
+
+/* Tags */
+.post-tag {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	text-transform: capitalize;
+	font-style: italic;
+}
+.postlist-item > .post-tag {
+	align-self: center;
+}
+
+/* Tags list */
+.post-metadata {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: .5em;
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+.post-metadata time {
+	margin-right: 1em;
+}</style>
+		
+	</head>
+	<body>
+		<a href="#main" id="skip-link" class="visually-hidden">Skip to main content</a>
+
+		<header>
+			<a href="/raka.gunar.to/" class="home-link">Dead Letters</a>
+			<nav>
+				<h2 class="visually-hidden" id="top-level-navigation-menu">Top level navigation menu</h2>
+				<ul class="nav">
+					<li class="nav-item"><a href="/raka.gunar.to/">Home</a></li>
+					<li class="nav-item"><a href="/raka.gunar.to/blog/">Archive</a></li>
+					<li class="nav-item"><a href="/raka.gunar.to/about/" aria-current="page">About</a></li>
+					<li class="nav-item"><a href="/raka.gunar.to/feed/feed.xml">Feed</a></li>
+				</ul>
+			</nav>
+		</header>
+
+		<main id="main">
+			<heading-anchors>
+				
+<h1 id="about">About</h1>
+<p>Hi, I'm <strong>Raka Gunarto</strong>, a software engineer. I have been interested in computers since
+I was barely conscious (10 years old?). The earliest recollection of my curiosity was looking at
+the magic box that showed things on a monitor. Not much later, I asked my dad about
+Excel macros while he was working on a spreadsheet. From there, I began my deep dive into
+the world of software, and I've only scratched the surface of what there is to explore.</p>
+<p>I frequently create things in my spare time, many of which can be found on my <a href="https://github.com/raka-gunarto">GitHub</a></p>
+<h2 id="what-i-do">What I Do</h2>
+<p>I'm currently in my early career as a software engineer. I love learning new things, and finding
+new people to learn new things from.</p>
+<p>My current role is at EnQuest, where I work as a software engineer within an operations
+focused organisation. In practice, this means taking end-to-end ownership of internal engineering
+work. I work on various projects which ranges from building AI assisted search with their data
+to experimenting with machine learning to assist in their operations.</p>
+<p>More broadly, I enjoy working on (positively) impactful wide-reaching projects alongside
+a high-performing team. I want to work alongside truly passionate people who care about
+doing things right and continuous improvement.</p>
+<h2 id="background">Background</h2>
+<p>I studied an MEng in Computer Science at the University of Leeds, where I graduated with a first.
+Alongside the formal curriculum, I took opportunities to go further than the syllabus in topics
+that interested me. Notably, I took a deep interest in the operating systems module, where I
+implemented a <a href="https://github.com/raka-gunarto/xv6-mmap">subset of mmap</a> in xv6 to share memory pages, and later on wrote a <a href="https://github.com/raka-gunarto/uol-bsc-project">toy
+graphics driver</a> for xv6 for my BSc project. I also took an interest in graphics programming,
+where I spent a winter break writing a <a href="https://github.com/raka-gunarto/COMP3811-CW2-GameEngine">mini game engine</a> for an assignment.</p>
+<p>In addition to the academics, I loved helping my peers and sharing my knowledge, spending my time in labs
+helping other students and later becoming a teaching assistant. I was awarded the BIT94 prize
+in computing, which is &quot;awarded to the student who does most to foster good interaction of either
+an academic or social nature between staff and students in the School of Computing&quot;.</p>
+<p>Before and during university, I worked on a mix of personal projects, hackathons, and part-time roles,
+which eventually led to an internship and then a full-time role at Microsoft, working on telecoms
+infrastructure in the cloud.</p>
+<p>Since then, I’ve focused on learning from strong engineering cultures and working alongside
+the best minds in the field.</p>
+<h2 id="interests">Interests</h2>
+<p>If you were to ask me my top three areas of interest, it would be:</p>
+<ul>
+<li>Low-level (OS kernels, drivers, etc.)</li>
+<li>Large-scale distributed systems (reliability, fault tolerance, and real-world scaling)</li>
+<li>Graphics programming (OpenGL, Vulkan, etc)</li>
+</ul>
+<p>I am also very fond of open source, which I believe truly embodies the values I hold
+dear: the desire to create great things and share it for all. The
+linux kernel project is something I have great respect for, it runs a majority of
+the systems in the world, and many contributors are just passionate people
+with spare time.</p>
+<p>People in general that care deeply about their craft, software or something else entirely,
+also interest me.</p>
+<h2 id="connect">Connect</h2>
+<ul>
+<li><a href="https://github.com/raka-gunarto">GitHub</a></li>
+<li><a href="https://linkedin.com/raka-gunarto">LinkedIn</a></li>
+<li><a href="mailto:rakagunarto@gmail.com">Email</a></li>
+</ul>
+
+
+			</heading-anchors>
+		</main>
+
+		
+
+		<!-- This page `/about/` was built on 2026-01-27T22:34:06.670Z -->
+		<script type="module" src="/raka.gunar.to/dist/55DF1-nWzy.js"></script>
+	</body>
+</html>
