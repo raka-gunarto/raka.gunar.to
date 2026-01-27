@@ -3,18 +3,18 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
   <title>Dead Letters</title>
   <subtitle>Out of band thinking</subtitle>
-  <link href="https://raka.gunar.to/raka.gunar.to/feed/feed.xml" rel="self" />
-  <link href="https://raka.gunar.to/raka.gunar.to/" />
+  <link href="https://raka.gunar.to/feed/feed.xml" rel="self" />
+  <link href="https://raka.gunar.to/" />
   <updated>2025-12-24T00:00:00Z</updated>
-  <id>https://raka.gunar.to/raka.gunar.to/</id>
+  <id>https://raka.gunar.to/</id>
   <author>
     <name>Raka Gunarto</name>
   </author>
   <entry>
     <title>Secure Boot Growing Pains</title>
-    <link href="https://raka.gunar.to/raka.gunar.to/blog/secure-boot-pains/" />
+    <link href="https://raka.gunar.to/blog/secure-boot-pains/" />
     <updated>2025-12-24T00:00:00Z</updated>
-    <id>https://raka.gunar.to/raka.gunar.to/blog/secure-boot-pains/</id>
+    <id>https://raka.gunar.to/blog/secure-boot-pains/</id>
     <content type="html">&lt;p&gt;I archived my decade old Windows install I&#39;ve been moving from machine to machine since my school years, and installed PopOS on my main machine now (previously had Linux on a removable SSD). I&#39;d like to share below what I learned about signing from the pain of setting up &amp;quot;Secure Boot&amp;quot; as I still wanted to dual boot Windows for games with draconian anti-cheats.&lt;/p&gt;
 &lt;h3 id=&quot;what-is-secure-boot&quot;&gt;What is Secure Boot?&lt;/h3&gt;
 &lt;p&gt;Secure boot is a mechanism in which the BIOS/UEFI verifies the signatures of the bootloader (the boot stage before the OS kernel). Most boards come preloaded with the Microsoft signing keys for Windows and Microsoft approved binaries. However you can enroll your own keys!&lt;/p&gt;
