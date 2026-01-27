@@ -6,9 +6,11 @@ const eleventyNavigation = {
 
 const numberOfLatestPostsToShow = 3;
 ---
+<h1>Hi!</h1>
+<p>Welcome to <a href="/about/">Raka Gunarto</a>'s personal blog. Here I write mostly about technology and software development, and occasionally about other topics that interest me.</p>
 {% set postsCount = collections.posts | length %}
 {% set latestPostsCount = postsCount | min(numberOfLatestPostsToShow) %}
-<h1>Latest {{ latestPostsCount }} Post{% if latestPostsCount != 1 %}s{% endif %}</h1>
+<h1>Latest Post{% if latestPostsCount != 1 %}s{% endif %}</h1>
 
 {% set postslist = collections.posts | head(-1 * numberOfLatestPostsToShow) %}
 {% set postslistCounter = postsCount %}
