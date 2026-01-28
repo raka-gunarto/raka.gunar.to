@@ -20,13 +20,28 @@
 	--syntax-tab-size: 2;
 }
 
+/* Dark theme colors */
+:root[data-theme="dark"] {
+	--color-gray-20: #e0e0e0;
+	--color-gray-50: #C0C0C0;
+	--color-gray-90: #dad8d8;
+
+	--text-color: var(--color-gray-90);
+	--text-color-link: #fa8072;
+	--text-color-link-active: #ffa07a;
+	--text-color-link-visited: #e9967a;
+
+	--background-color: #15202b;
+}
+
+/* Auto dark mode (when no manual preference is set) */
 @media (prefers-color-scheme: dark) {
-	:root {
+	:root:not([data-theme]) {
 		--color-gray-20: #e0e0e0;
 		--color-gray-50: #C0C0C0;
 		--color-gray-90: #dad8d8;
 
-		/* --text-color is assigned to --color-gray-_ above */
+		--text-color: var(--color-gray-90);
 		--text-color-link: #fa8072;
 		--text-color-link-active: #ffa07a;
 		--text-color-link-visited: #e9967a;
@@ -225,6 +240,31 @@ header {
 }
 .nav a[href][aria-current="page"] {
 	text-decoration: underline;
+}
+
+/* Theme toggle */
+.theme-toggle {
+	background: none;
+	border: 1px solid var(--color-gray-50);
+	border-radius: 4px;
+	color: var(--text-color);
+	cursor: pointer;
+	font-size: 0.8em;
+	padding: 0.25em 0.5em;
+	transition: all 0.2s ease;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 2.5em;
+}
+.theme-toggle:hover {
+	border-color: var(--text-color-link);
+	background-color: var(--color-gray-20);
+	opacity: 0.8;
+}
+.theme-toggle:focus {
+	outline: 2px solid var(--text-color-link);
+	outline-offset: 2px;
 }
 
 /* Posts list */

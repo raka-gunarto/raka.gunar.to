@@ -46,6 +46,9 @@
 		{#- Renders the CSS bundle using a separate file, if you can't set CSP directive style-src: 'unsafe-inline' #}
 		{#- <link rel="stylesheet" href="{% getBundleFileUrl "css" %}"> #}
 
+		{#- Theme toggle script (loaded early to prevent flash) #}
+		<script>{% include "public/js/theme-toggle.js" %}</script>
+
 		{#- Add the heading-anchors web component to the JavaScript bundle #}
 		<script type="module">{% include "node_modules/@zachleat/heading-anchors/heading-anchors.js" %}</script>
 	</head>
@@ -62,6 +65,11 @@
 				{%- for entry in collections.all | eleventyNavigation %}
 					<li class="nav-item"><a href="{{ entry.url }}"{% if entry.url == page.url %} aria-current="page"{% endif %}>{{ entry.title }}</a></li>
 				{%- endfor %}
+					<li class="nav-item">
+						<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+							<span class="theme-toggle-icon">🌙</span>
+						</button>
+					</li>
 				</ul>
 			</nav>
 		</header>
