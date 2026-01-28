@@ -71,3 +71,10 @@ also interest me.
 - [GitHub](https://github.com/raka-gunarto)
 - [LinkedIn](https://linkedin.com/raka-gunarto)
 - [Email](mailto:rakagunarto@gmail.com)
+
+## Cat
+
+You made it this far, have a cat pic! *(powered by cataas.com)*
+
+
+<img src="https://cataas.com/cat"/>
