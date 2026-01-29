@@ -77,6 +77,57 @@
 	navigation: auto;
 }
 
+@keyframes slide-up {
+	from {
+		opacity: 0;
+		transform: translateY(50px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+main {
+	view-transition-name: main;
+}
+
+footer {
+	view-transition-name: footer;
+}
+
+::view-transition-new(main)
+{
+	animation: slide-up 0.3s ease forwards;
+}
+
+::view-transition-old(main)
+{
+	animation: slide-up 0.05s ease reverse forwards;
+}
+
+::view-transition-new(footer)
+{
+	opacity: 0;
+	animation: fade-in 0.3s ease forwards;
+	animation-delay: 0.3s;
+}
+
+::view-transition-old(footer)
+{
+	display: none;
+}
+
+
 html,
 body {
 	padding: 0;
@@ -406,7 +457,7 @@ This is compatible with:
 		</footer>
 		
 
-		<!-- This page `/404.html` was built on 2026-01-28T10:04:31.594Z -->
+		<!-- This page `/404.html` was built on 2026-01-29T10:25:13.014Z -->
 		<script type="module" src="/dist/4hdsf0nhkk.js"></script>
 	</body>
 </html>
