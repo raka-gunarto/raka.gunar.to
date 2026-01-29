@@ -29,6 +29,8 @@
 
 	--background-color: #fff;
 
+	--warn: #fff0b6;
+
 	--text-color: var(--color-gray-90);
 	--text-color-link: #fa8072;
 	--text-color-link-active: #e9967a;
@@ -42,6 +44,8 @@
 	--color-gray-20: #e0e0e0;
 	--color-gray-50: #C0C0C0;
 	--color-gray-90: #dad8d8;
+
+	--warn: #a78912;
 
 	--text-color: var(--color-gray-90);
 	--text-color-link: #fa8072;
@@ -57,6 +61,8 @@
 		--color-gray-20: #e0e0e0;
 		--color-gray-50: #C0C0C0;
 		--color-gray-90: #dad8d8;
+
+		--warn: #a78912;
 
 		--text-color: var(--color-gray-90);
 		--text-color-link: #fa8072;
@@ -290,6 +296,15 @@ header {
 }
 .home-link:link:not(:hover) {
 	text-decoration: none;
+}
+
+/* Old post banner */
+.old-post-banner {
+	background-color: var(--warn);
+	color: var(--text-color);
+	border-radius: 4px;
+	padding: 1em;
+	margin-bottom: 1em;
 }
 
 /* Nav */
@@ -600,6 +615,9 @@ pre[class*="language-diff-"] {
 				
 
 
+
+
+
 <h1 id="secure-boot-growing-pains">Secure Boot Growing Pains</h1>
 
 <ul class="post-metadata">
@@ -641,6 +659,8 @@ pre[class*="language-diff-"] {
 <p>Finally yes, thankfully. Since I already signed systemd-boot and the kernel EFI binaries with sbctl and enrolled the keys into UEFI, everything works. I could simplify it further by resetting the platform keys and signing the EFI binaries with the MOK key instead.</p>
 <p>If there are any powerusers out there who set this up in a less... cursed way, please feel free to share your experience with me 😅 .</p>
 
+<ul class="links-nextprev"><li class="links-nextprev-prev">← Previous<br> <a href="/blog/2017/06/20/school-study-leave-geofencing/">School Study Leave Geofencing-based Registration</a></li>
+</ul>
 
 			</heading-anchors>
 		</main>
@@ -653,7 +673,7 @@ pre[class*="language-diff-"] {
 		</footer>
 		
 
-		<!-- This page `/blog/secure-boot-pains/` was built on 2026-01-29T10:25:13.014Z -->
+		<!-- This page `/blog/2025/12/24/secure-boot-pains/` was built on 2026-01-29T11:24:52.629Z -->
 		<script type="module" src="/dist/4hdsf0nhkk.js"></script>
 	</body>
 </html>

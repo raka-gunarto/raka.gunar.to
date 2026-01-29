@@ -1,0 +1,930 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Pacman A* Pathfinding</title>
+		<link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+		<!-- Google tag (gtag.js) -->
+		<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-H9QR43SSJG"></script>
+		
+		<meta name="description" content="Solving pacman A* on hackerrank">
+		<link rel="alternate" href="/feed/feed.xml" type="application/atom+xml" title="Dead Letters">
+		
+		
+		
+		<style>/* This is an arbitrary CSS string added to the bundle */
+/* Defaults */
+:root {
+	--font-family: -apple-system, system-ui, sans-serif;
+	--font-family-monospace: Consolas, Menlo, Monaco, Andale Mono WT, Andale Mono, Lucida Console, Lucida Sans Typewriter, DejaVu Sans Mono, Bitstream Vera Sans Mono, Liberation Mono, Nimbus Mono L, Courier New, Courier, monospace;
+}
+
+/* Theme colors */
+:root {
+	--color-gray-20: #e0e0e0;
+	--color-gray-50: #C0C0C0;
+	--color-gray-90: #333;
+
+	--background-color: #fff;
+
+	--warn: #fff0b6;
+
+	--text-color: var(--color-gray-90);
+	--text-color-link: #fa8072;
+	--text-color-link-active: #e9967a;
+	--text-color-link-visited: #cd5c5c;
+
+	--syntax-tab-size: 2;
+}
+
+/* Dark theme colors */
+:root[data-theme="dark"] {
+	--color-gray-20: #e0e0e0;
+	--color-gray-50: #C0C0C0;
+	--color-gray-90: #dad8d8;
+
+	--warn: #a78912;
+
+	--text-color: var(--color-gray-90);
+	--text-color-link: #fa8072;
+	--text-color-link-active: #ffa07a;
+	--text-color-link-visited: #e9967a;
+
+	--background-color: #15202b;
+}
+
+/* Auto dark mode (when no manual preference is set) */
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme]) {
+		--color-gray-20: #e0e0e0;
+		--color-gray-50: #C0C0C0;
+		--color-gray-90: #dad8d8;
+
+		--warn: #a78912;
+
+		--text-color: var(--color-gray-90);
+		--text-color-link: #fa8072;
+		--text-color-link-active: #ffa07a;
+		--text-color-link-visited: #e9967a;
+
+		--background-color: #15202b;
+	}
+}
+
+
+/* Global stylesheet */
+* {
+	box-sizing: border-box;
+}
+
+@view-transition {
+	navigation: auto;
+}
+
+@keyframes slide-up {
+	from {
+		opacity: 0;
+		transform: translateY(50px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+main {
+	view-transition-name: main;
+}
+
+footer {
+	view-transition-name: footer;
+}
+
+::view-transition-new(main)
+{
+	animation: slide-up 0.3s ease forwards;
+}
+
+::view-transition-old(main)
+{
+	animation: slide-up 0.05s ease reverse forwards;
+}
+
+::view-transition-new(footer)
+{
+	opacity: 0;
+	animation: fade-in 0.3s ease forwards;
+	animation-delay: 0.3s;
+}
+
+::view-transition-old(footer)
+{
+	display: none;
+}
+
+
+html,
+body {
+	padding: 0;
+	margin: 0 auto;
+	font-family: var(--font-family);
+	color: var(--text-color);
+	background-color: var(--background-color);
+}
+html {
+	overflow-y: scroll;
+}
+body {
+	max-width: 40em;
+}
+
+/* https://www.a11yproject.com/posts/how-to-hide-content/ */
+.visually-hidden:not(:focus):not(:active) {
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	height: 1px;
+	overflow: hidden;
+	position: absolute;
+	white-space: nowrap;
+	width: 1px;
+}
+
+/* Fluid images via https://www.zachleat.com/web/fluid-images/ */
+img{
+  max-width: 100%;
+}
+img[width][height] {
+  height: auto;
+}
+img[src$=".svg"] {
+  width: 100%;
+  height: auto;
+  max-width: none;
+}
+video,
+iframe {
+	width: 100%;
+	height: auto;
+}
+iframe {
+	aspect-ratio: 16/9;
+}
+
+p:last-child {
+	margin-bottom: 0;
+}
+p {
+	line-height: 1.5;
+}
+
+li {
+	line-height: 1.5;
+}
+
+a[href] {
+	color: var(--text-color-link);
+}
+a[href]:visited {
+	color: var(--text-color-link-visited);
+}
+a[href]:hover,
+a[href]:active {
+	color: var(--text-color-link-active);
+}
+
+main,
+footer {
+	padding: 1rem;
+}
+main :first-child {
+	margin-top: 0;
+}
+
+header {
+	border-bottom: 1px dashed var(--color-gray-20);
+}
+
+#skip-link {
+	text-decoration: none;
+	background: var(--background-color);
+	color: var(--text-color);
+	padding: 0.5rem 1rem;
+	border: 1px solid var(--color-gray-90);
+	border-radius: 2px;
+}
+
+/* Prevent visually-hidden skip link fom pushing content around when focused */
+#skip-link.visually-hidden:focus {
+	position: absolute;
+	top: 1rem;
+	left: 1rem;
+	/* Ensure it is positioned on top of everything else when it is shown */
+	z-index: 999;
+}
+
+.links-nextprev {
+	display: flex;
+	justify-content: space-between;
+	gap: .5em 1em;
+	list-style: "";
+	border-top: 1px dashed var(--color-gray-20);
+	padding: 1em 0;
+}
+.links-nextprev > * {
+	flex-grow: 1;
+}
+.links-nextprev-next {
+	text-align: right;
+}
+
+table {
+	margin: 1em 0;
+}
+table td,
+table th {
+	padding-right: 1em;
+}
+
+pre,
+code {
+	font-family: var(--font-family-monospace);
+}
+pre:not([class*="language-"]) {
+	margin: .5em 0;
+	line-height: 1.375; /* 22px /16 */
+	-moz-tab-size: var(--syntax-tab-size);
+	-o-tab-size: var(--syntax-tab-size);
+	tab-size: var(--syntax-tab-size);
+	-webkit-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+	direction: ltr;
+	text-align: left;
+	white-space: pre;
+	word-spacing: normal;
+	word-break: normal;
+	overflow-x: auto;
+}
+code {
+	word-break: break-all;
+}
+
+/* Header */
+header {
+	display: flex;
+	gap: 1em;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1em;
+}
+.home-link {
+	flex-grow: 1;
+	font-size: 1em; /* 16px /16 */
+	font-weight: 700;
+}
+.home-link:link:not(:hover) {
+	text-decoration: none;
+}
+
+/* Old post banner */
+.old-post-banner {
+	background-color: var(--warn);
+	color: var(--text-color);
+	border-radius: 4px;
+	padding: 1em;
+	margin-bottom: 1em;
+}
+
+/* Nav */
+.nav {
+	display: flex;
+	gap: .5em 1em;
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+.nav-item {
+	display: inline-block;
+}
+.nav-item a[href]:not(:hover) {
+	text-decoration: none;
+}
+.nav a[href][aria-current="page"] {
+	text-decoration: underline;
+}
+
+/* Theme toggle */
+.theme-toggle {
+	background: none;
+	border: 1px solid var(--color-gray-50);
+	border-radius: 4px;
+	color: var(--text-color);
+	cursor: pointer;
+	font-size: 0.8em;
+	padding: 0.25em 0.5em;
+	transition: all 0.2s ease;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 2.5em;
+}
+.theme-toggle:hover {
+	border-color: var(--text-color-link);
+	background-color: var(--color-gray-20);
+	opacity: 0.8;
+}
+.theme-toggle:focus {
+	outline: 2px solid var(--text-color-link);
+	outline-offset: 2px;
+}
+
+/* Posts list */
+.postlist {
+	counter-reset: start-from var(--postlist-index);
+	list-style: none;
+	padding: 0;
+	padding-left: 1.5rem;
+}
+.postlist-item {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	counter-increment: start-from -1;
+	margin-bottom: 1em;
+}
+.postlist-item:before {
+	display: inline-block;
+	pointer-events: none;
+	content: "" counter(start-from, decimal-leading-zero) ". ";
+	line-height: 100%;
+	text-align: right;
+	margin-left: -1.5rem;
+}
+.postlist-date,
+.postlist-item:before {
+	font-size: 0.8125em; /* 13px /16 */
+	color: var(--color-gray-90);
+}
+.postlist-date {
+	word-spacing: -0.5px;
+}
+.postlist-link {
+	font-size: 1.1875em; /* 19px /16 */
+	font-weight: 700;
+	flex-basis: calc(100% - 1.5rem);
+	padding-left: .25em;
+	padding-right: .5em;
+	text-underline-position: from-font;
+	text-underline-offset: 0;
+	text-decoration-thickness: 1px;
+}
+.postlist-item-active .postlist-link {
+	font-weight: bold;
+}
+
+/* Tags */
+.post-tag {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	text-transform: capitalize;
+	font-style: italic;
+}
+.postlist-item > .post-tag {
+	align-self: center;
+}
+
+/* Tags list */
+.post-metadata {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: .5em;
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+.post-metadata time {
+	margin-right: 1em;
+}
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+
+code[class*="language-"],
+pre[class*="language-"] {
+	color: #f8f8f2;
+	background: none;
+	text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+	font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+	font-size: 1em;
+	text-align: left;
+	white-space: pre;
+	word-spacing: normal;
+	word-break: normal;
+	word-wrap: normal;
+	line-height: 1.5;
+
+	-moz-tab-size: 4;
+	-o-tab-size: 4;
+	tab-size: 4;
+
+	-webkit-hyphens: none;
+	-moz-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+}
+
+/* Code blocks */
+pre[class*="language-"] {
+	padding: 1em;
+	margin: .5em 0;
+	overflow: auto;
+	border-radius: 0.3em;
+}
+
+:not(pre) > code[class*="language-"],
+pre[class*="language-"] {
+	background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*="language-"] {
+	padding: .1em;
+	border-radius: .3em;
+	white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+	color: #8292a2;
+}
+
+.token.punctuation {
+	color: #f8f8f2;
+}
+
+.token.namespace {
+	opacity: .7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+	color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+	color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+	color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+	color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+	color: #e6db74;
+}
+
+.token.keyword {
+	color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+	color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+	font-weight: bold;
+}
+.token.italic {
+	font-style: italic;
+}
+
+.token.entity {
+	cursor: help;
+}
+/*
+ * New diff- syntax
+ */
+
+pre[class*="language-diff-"] {
+	--eleventy-code-padding: 1.25em;
+	padding-left: var(--eleventy-code-padding);
+	padding-right: var(--eleventy-code-padding);
+}
+.token.deleted {
+	background-color: hsl(0, 51%, 37%);
+	color: inherit;
+}
+.token.inserted {
+	background-color: hsl(126, 31%, 39%);
+	color: inherit;
+}
+
+/* Make the + and - characters unselectable for copy/paste */
+.token.prefix.unchanged,
+.token.prefix.inserted,
+.token.prefix.deleted {
+	-webkit-user-select: none;
+	user-select: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.token.prefix.inserted,
+.token.prefix.deleted {
+	width: var(--eleventy-code-padding);
+	background-color: rgba(0,0,0,.2);
+}
+
+/* Optional: full-width background color */
+.token.inserted:not(.prefix),
+.token.deleted:not(.prefix) {
+	display: block;
+	margin-left: calc(-1 * var(--eleventy-code-padding));
+	margin-right: calc(-1 * var(--eleventy-code-padding));
+	text-decoration: none; /* override del, ins, mark defaults */
+	color: inherit; /* override del, ins, mark defaults */
+}</style>
+		
+		
+	</head>
+	<body>
+		<a href="#main" id="skip-link" class="visually-hidden">Skip to main content</a>
+
+		<header>
+			<a href="/" class="home-link">Dead Letters</a>
+			<nav>
+				<h2 class="visually-hidden" id="top-level-navigation-menu">Top level navigation menu</h2>
+				<ul class="nav">
+					<li class="nav-item"><a href="/">Home</a></li>
+					<li class="nav-item"><a href="/blog/">Archive</a></li>
+					<li class="nav-item"><a href="/about/">About</a></li>
+					<li class="nav-item"><a href="/feed/feed.xml">Feed</a></li>
+					<li class="nav-item">
+						<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+							<span class="theme-toggle-icon">🌙</span>
+						</button>
+					</li>
+				</ul>
+			</nav>
+		</header>
+
+		<main id="main">
+			<heading-anchors>
+				
+
+
+
+
+<div class="old-post-banner">
+	<p><strong>Note:</strong> This post was originally published on my old blog platform and has been migrated here for archival purposes. Some content or formatting may differ from the original.</p>
+</div>
+
+<h1 id="pacman-a-pathfinding">Pacman A* Pathfinding</h1>
+
+<ul class="post-metadata">
+	<li><time datetime="2017-01-25">25 January 2017</time></li>
+	<li><a href="/tags/old/" class="post-tag">old</a></li>
+</ul>
+
+<p>In this problem we use the A* pathfinding algorithm to traverse a maze.</p>
+<h2 id="here-is-the-problem-statement">Here is the problem statement:</h2>
+<h3 id="input-format">Input Format</h3>
+<p>The first line contains 2 space separated integers which is the position of the PacMan.
+The second line contains 2 space separated integers which is the position of the food.
+The third line of the input contains 2 space separated integers. Indicating the size of the rows and columns respectively.
+This is followed by row (r) lines each containing column (c) characters. A wall is represented by the character ‘%’ ( ascii value 37 ), PacMan is represented by UpperCase alphabet ‘P’ ( ascii value 80 ), empty spaces which can be used by PacMan for movement is represented by the character ‘-‘ ( ascii value 45 ) and food is represented by the character ‘.’ ( ascii value 46 )</p>
+<p>The top left of the grid is indexed (0,0) and the bottom right of the grid is indexed (r-1,c-1)</p>
+<p>The grid is indexed as per matrix convention</p>
+<p>For the sake of uniformity across all codes, cost to reach a neighboring node</p>
+<p>0 if a food is present.
+1 otherwise.
+Output Format</p>
+<p>Each cell in the grid is represented by its position in the grid (x,y). PacMan can move only UP, DOWN, LEFT or RIGHT. Your task is to print all the nodes in the shortest path calculated using Astar search between Pacman and Food.</p>
+<pre class="language-z" tabindex="0"><code class="language-z"> %
+%--
+ -</code></pre>
+<p>In the above cell, LEFT and UP are invalid moves. You can either go RIGHT or DOWN. RIGHT is populated first followed by DOWN. i.e., populate the queue UP, LEFT, RIGHT and DOWN order so that UP gets popped first from the queue.</p>
+<p>Print the distance ‘D’ between the source ‘P’ and the destination ‘.’ calculated using Astar. D+1 lines follow, each line having a node encountered between ‘P’ and ‘.’ both included. D+1 lines essentially representing the path between source and the destination.</p>
+<h3 id="sample-input">Sample Input</h3>
+<pre class="language-z" tabindex="0"><code class="language-z">35 35
+35 1
+37 37
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%-------%-%-%-----------%---%-----%-%
+%-%%%%%%%-%-%%%-%-%%%-%%%-%%%%%%%-%-%
+%-------%-------%-%-----%-----%-%---%
+%%%%%-%%%%%-%%%-%-%-%-%%%-%%%%%-%-%%%
+%---%-%-%-%---%-%-%-%---%-%---%-%---%
+%-%%%-%-%-%-%%%-%%%%%-%%%-%-%%%-%%%-%
+%-------%-----%---%---%-----%-%-%---%
+%%%-%%%%%%%%%-%%%%%%%-%%%-%%%-%-%-%-%
+%-------------%-------%-%---%-----%-%
+%-%-%%%%%-%-%%%-%-%-%%%-%-%%%-%%%-%-%
+%-%-%-----%-%-%-%-%-----%---%-%-%-%-%
+%-%-%-%%%%%%%-%-%%%%%%%%%-%%%-%-%%%-%
+%-%-%-%-----%---%-----%-----%---%---%
+%%%-%%%-%-%%%%%-%%%%%-%%%-%%%-%%%%%-%
+%-----%-%-%-----%-%-----%-%---%-%-%-%
+%-%-%-%-%-%%%-%%%-%%%-%%%-%-%-%-%-%-%
+%-%-%-%-%-----------------%-%-%-----%
+%%%-%%%%%%%-%-%-%%%%%-%%%-%-%%%-%%%%%
+%-------%-%-%-%-----%---%-----%-%---%
+%%%%%-%-%-%%%%%%%%%-%%%%%%%%%%%-%-%%%
+%---%-%-----------%-%-----%---%-%---%
+%-%%%-%%%%%-%%%%%%%%%-%%%%%-%-%-%%%-%
+%-%---%------%--------%-----%-------%
+%-%-%-%%%%%-%%%-%-%-%-%-%%%%%%%%%%%%%
+%-%-%---%-----%-%-%-%-------%---%-%-%
+%-%-%%%-%%%-%-%-%-%%%%%%%%%-%%%-%-%-%
+%-%---%-%---%-%-%---%-%---%-%-%-----%
+%-%%%-%%%-%%%%%-%%%-%-%-%%%%%-%-%%%%%
+%-------%---%-----%-%-----%---%-%---%
+%%%-%-%%%%%-%%%%%-%%%-%%%-%-%%%-%-%%%
+%-%-%-%-%-%-%-%-----%-%---%-%---%-%-%
+%-%-%%%-%-%-%-%-%%%%%%%%%-%-%-%-%-%-%
+%---%---%---%-----------------%-----%
+%-%-%-%-%%%-%%%-%%%%%%%-%%%-%%%-%%%-%
+%.%-%-%-------%---%-------%---%-%--P%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</code></pre>
+<p>So in this sample input, we are given 4 pieces of information</p>
+<p>Pacman’s position (35,35), which is also identified by the letter P in the grid later
+Position of the food (35,1), which is also later identified by the character ‘.’ in the grid
+The size of the grid (37×37)
+The grid itself, ‘%’ for a wall ‘-‘ for a free space, ‘P’ for Pacman’s starting position and ‘.’ for the position of the food.
+Note that the size of the grid is based on the number of characters in the length and width, but the positions are given per matrix convention, where the columns and rows are numbered starting on zero and the row number goes up as it goes down on the y axis.</p>
+<p>So the problem is asking us to solve this using the A* pathfinding algorithm.</p>
+<p>So the way the A* pathfinding algorithm works is using heuristics, which is effectively guessing.</p>
+<p>We’ll treat the grid like a graph and each node has a distance of 1 to each other. In A* pathfinding, there is a ‘g’ score for each node, a ‘h’ score and an ‘f’ score. The g score is the distance between the current node and the starting node. The h score is the heuristic value, the distance between the current node and the target node. The f score is those two values combined. Distance is calculated however you want, since this is a rectangular grid with uniformly sized and distanced cells, you can calculate the straight line distance between one node to another. But in this post I will use just simple manhattan distance, which is adding the x difference and the y difference.</p>
+<p>The algorithm is quite easy, here is some pseudocode</p>
+<pre class="language-py" tabindex="0"><code class="language-py">openNodes <span class="token operator">=</span> <span class="token builtin">list</span>
+closedNodes <span class="token operator">=</span> <span class="token builtin">list</span>
+<span class="token builtin">int</span> xT<span class="token punctuation">,</span>yT
+node targetNode <span class="token operator">=</span> <span class="token punctuation">(</span>xT<span class="token punctuation">,</span>yT<span class="token punctuation">)</span>
+<span class="token builtin">int</span> xS<span class="token punctuation">,</span>yS
+node startingNode <span class="token operator">=</span> <span class="token punctuation">(</span>xS<span class="token punctuation">,</span>yS<span class="token punctuation">)</span>
+append starting node to openNodes
+<span class="token keyword">while</span><span class="token punctuation">(</span>openNodes <span class="token keyword">is</span> <span class="token keyword">not</span> empty<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    sort openNodes by f score ascending
+    take the smallest score node <span class="token keyword">as</span> current
+    <span class="token keyword">for</span> each<span class="token punctuation">(</span>adjacentNodes<span class="token punctuation">)</span><span class="token punctuation">{</span>
+        adjacentNode<span class="token punctuation">.</span>g <span class="token operator">=</span> distance <span class="token keyword">from</span> start
+        adjacentNode<span class="token punctuation">.</span>h <span class="token operator">=</span> estimated distance to target
+        adjacentNode<span class="token punctuation">.</span>f <span class="token operator">=</span> adjacentNode<span class="token punctuation">.</span>g <span class="token operator">+</span> adjacentNode<span class="token punctuation">.</span>h
+        <span class="token builtin">set</span> parent to current node
+        <span class="token keyword">if</span><span class="token punctuation">(</span>adjacentNode <span class="token operator">==</span> targetNode<span class="token punctuation">)</span>
+           <span class="token keyword">break</span>
+        <span class="token keyword">if</span><span class="token punctuation">(</span>adjacentNode <span class="token keyword">not</span> <span class="token keyword">in</span> closedNodes<span class="token punctuation">)</span>
+           append to openNodes
+    <span class="token punctuation">}</span>
+    append current node to closed nodes
+    remove current node <span class="token keyword">from</span> <span class="token builtin">open</span> nodes
+<span class="token punctuation">}</span>
+path <span class="token operator">=</span> <span class="token builtin">list</span>
+node currentNode <span class="token operator">=</span> targetNode
+path<span class="token punctuation">.</span>push_front<span class="token punctuation">(</span>currentNode<span class="token punctuation">)</span>
+<span class="token keyword">while</span><span class="token punctuation">(</span>currentNode <span class="token operator">!=</span> startingNode<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    path<span class="token punctuation">.</span>push_front<span class="token punctuation">(</span>currentNode<span class="token punctuation">.</span>parent<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+path<span class="token punctuation">.</span>push_front<span class="token punctuation">(</span>startingNode<span class="token punctuation">)</span></code></pre>
+<p>As you can see, the logic process in this is quite simple. It is as follows</p>
+<p>Pick the node with the smallest f score and use that as current node
+Check adjacent nodes and calculate f score
+Set parent to current node and append unless it is in the list closed nodes, remove current from open nodes
+Repeat step 1-3 until there are no more open nodes or reach target
+Backtrack from parents and add to the front of a list to get the path
+Alright so let’s walk through on how to code the solution. I’ll be using C++.</p>
+<p>Firstly, we need to create a Node class/struct to easily store each node and its information.</p>
+<pre class="language-cpp" tabindex="0"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Node</span><span class="token punctuation">{</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token keyword">int</span> coordX<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> coordY<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> distFromStart<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> heuristicDistFromTarget<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> totalCost<span class="token punctuation">;</span>
+    <span class="token function">Node</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">Node</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+ 
+<span class="token class-name">Node</span><span class="token double-colon punctuation">::</span><span class="token function">Node</span><span class="token punctuation">(</span><span class="token keyword">int</span> mX<span class="token punctuation">,</span> <span class="token keyword">int</span> mY<span class="token punctuation">,</span> <span class="token keyword">int</span> dStart<span class="token punctuation">,</span> <span class="token keyword">int</span> hDTarget<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    coordX <span class="token operator">=</span> mX<span class="token punctuation">;</span>
+    coordY <span class="token operator">=</span> mY<span class="token punctuation">;</span>
+    distFromStart <span class="token operator">=</span> dStart<span class="token punctuation">;</span>
+    heuristicDistFromTarget <span class="token operator">=</span> hDTarget<span class="token punctuation">;</span>
+    totalCost <span class="token operator">=</span> dStart <span class="token operator">+</span> hDTarget<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>I replaced the variable names with more descriptive names like totalCost instead of fScore to make it easier to understand</p>
+<p>Now, let’s focus on creating the pathfinding function.</p>
+<p>Firstly we need a list of open nodes and closed nodes. We can simply declare two lists in our pathfinding function. We use a vector of pairs for the closed nodes list so we don’t need to create a comparison overload for the Node class.</p>
+<pre class="language-cpp" tabindex="0"><code class="language-cpp">deque<span class="token operator">&lt;</span>pair<span class="token operator">&lt;</span>Node<span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token operator">>></span> openNodes<span class="token punctuation">;</span>
+vector<span class="token operator">&lt;</span>pair<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token operator">>></span> closedNodes<span class="token punctuation">;</span></code></pre>
+<p>We use a double ended queue for openNodes so we can use .pop_front, which pops the first element out of the list, since we’ll be checking that one each time after sorting the double ended queue.</p>
+<p>Next, we need something to be able to store the parents of a node. Here we’ll use a map, which has a pair of ints (the coordinates of a node) as the key and value. The reason we use a map is a node can have multiple parents belonging to different paths, due to the nature of the algorithm, any overwrites will be better than the old parent, and a map can only store one value for each key. And we can use the coordinates as a key instead of having to search through a list. The reason we don’t store parent information in the nodes itself is that it might change, and if we have to change it we’ll have to search through the nodes list, which is time consuming.</p>
+<pre class="language-cpp" tabindex="0"><code class="language-cpp">map<span class="token operator">&lt;</span>pair<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token punctuation">,</span><span class="token keyword">int</span><span class="token operator">></span><span class="token punctuation">,</span>pair<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token punctuation">,</span><span class="token keyword">int</span><span class="token operator">>></span> parents<span class="token punctuation">;</span></code></pre>
+<p>Now for a few utility functions. We need to check if adjacent coordinates actually exist, so we’ll create a withinBounds function that takes a Node object, the X size of the grid and the Y size of the grid.</p>
+<pre class="language-cpp" tabindex="0"><code class="language-cpp"><span class="token keyword">inline</span> <span class="token keyword">bool</span> <span class="token function">withinBounds</span><span class="token punctuation">(</span>Node node<span class="token punctuation">,</span> <span class="token keyword">int</span> sizeX<span class="token punctuation">,</span> <span class="token keyword">int</span> sizeY<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>coordX <span class="token operator">>=</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> node<span class="token punctuation">.</span>coordX <span class="token operator">&lt;</span> sizeX <span class="token operator">&amp;&amp;</span> node<span class="token punctuation">.</span>coordY <span class="token operator">>=</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> node<span class="token punctuation">.</span>coordY <span class="token operator">&lt;</span> sizeY<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>Simple right? Just checking if the x and y values are greater or equal to zero and less than the maximum x or y.</p>
+<p>Now we need a sort utility function to sort the openNodes list by the f score. We will use the sort() function in the “algorithm” header file, but since this is our own object, we need to create the sort function.</p>
+<pre class="language-cpp" tabindex="0"><code class="language-cpp"><span class="token keyword">bool</span> <span class="token function">heuristicsSort</span><span class="token punctuation">(</span><span class="token keyword">const</span> Node<span class="token operator">&amp;</span> node1<span class="token punctuation">,</span> <span class="token keyword">const</span> Node<span class="token operator">&amp;</span> node2<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> node1<span class="token punctuation">.</span>totalCost <span class="token operator">&lt;</span> node2<span class="token punctuation">.</span>totalCost<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>Now we will write the algorithm part of the solution. Please note that the problem guarantees a solution, so I will not have conditions where a solution is node found.</p>
+<pre class="language-cpp" tabindex="0"><code class="language-cpp">Node <span class="token function">nodeExplore</span><span class="token punctuation">(</span><span class="token keyword">int</span> startX<span class="token punctuation">,</span> <span class="token keyword">int</span> startY<span class="token punctuation">,</span> <span class="token keyword">int</span> foodX<span class="token punctuation">,</span> <span class="token keyword">int</span> foodY<span class="token punctuation">,</span> <span class="token keyword">int</span> mSizeX<span class="token punctuation">,</span> <span class="token keyword">int</span> mSizeY<span class="token punctuation">)</span><span class="token punctuation">{</span> 
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+        <span class="token function">sort</span><span class="token punctuation">(</span>openNodes<span class="token punctuation">.</span><span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> openNodes<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> heuristicsSort<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        Node curNode <span class="token operator">=</span> openNodes<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>first<span class="token punctuation">;</span>
+         
+        <span class="token keyword">int</span> xyUp<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">{</span> curNode<span class="token punctuation">.</span>coordX<span class="token punctuation">,</span> curNode<span class="token punctuation">.</span>coordY <span class="token operator">-</span> <span class="token number">1</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+        <span class="token keyword">int</span> xyDown<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">{</span> curNode<span class="token punctuation">.</span>coordX<span class="token punctuation">,</span> curNode<span class="token punctuation">.</span>coordY <span class="token operator">+</span> <span class="token number">1</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+        <span class="token keyword">int</span> xyLeft<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">{</span> curNode<span class="token punctuation">.</span>coordX <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">,</span> curNode<span class="token punctuation">.</span>coordY <span class="token punctuation">}</span><span class="token punctuation">;</span>
+        <span class="token keyword">int</span> xyRight<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">{</span> curNode<span class="token punctuation">.</span>coordX <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">,</span> curNode<span class="token punctuation">.</span>coordY <span class="token punctuation">}</span><span class="token punctuation">;</span>
+ 
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">withinBounds</span><span class="token punctuation">(</span><span class="token function">Node</span><span class="token punctuation">(</span>curNode<span class="token punctuation">.</span>coordX<span class="token punctuation">,</span> curNode<span class="token punctuation">.</span>coordY <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>mSizeX<span class="token punctuation">,</span>mSizeY<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token comment">//Check within bounds XY</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>gameMap<span class="token punctuation">[</span>xyUp<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">[</span>xyUp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">]</span> <span class="token operator">!=</span> <span class="token char">'%'</span><span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token comment">// Check if not wall                </span>
+                <span class="token comment">//Ready to add to queue</span>
+                <span class="token comment">//Check the dist from start</span>
+                <span class="token keyword">int</span> distStart <span class="token operator">=</span> curNode<span class="token punctuation">.</span>distFromStart <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+                <span class="token comment">//Heuristic dist from target</span>
+                <span class="token keyword">int</span> distTarget <span class="token operator">=</span> <span class="token function">abs</span><span class="token punctuation">(</span>xyUp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">-</span> foodX<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token function">abs</span><span class="token punctuation">(</span>xyUp<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">-</span> foodY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                pair<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token operator">></span> upNodeXY <span class="token operator">=</span> <span class="token function">make_pair</span><span class="token punctuation">(</span>xyUp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> xyUp<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">find</span><span class="token punctuation">(</span>closedNodes<span class="token punctuation">.</span><span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> closedNodes<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> upNodeXY<span class="token punctuation">)</span> <span class="token operator">!=</span> closedNodes<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">//Check if node is already closed</span>
+                    <span class="token comment">//It is a closed node &lt;img draggable="false" role="img" class="emoji" alt="😦" src="https://s0.wp.com/wp-content/mu-plugins/wpcom-smileys/twemoji/2/svg/1f626.svg"></span>
+                <span class="token punctuation">}</span>
+                <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                    Node <span class="token function">upNode</span><span class="token punctuation">(</span>upNodeXY<span class="token punctuation">.</span>first<span class="token punctuation">,</span> upNodeXY<span class="token punctuation">.</span>second<span class="token punctuation">,</span> curNode<span class="token punctuation">,</span> distStart<span class="token punctuation">,</span> distTarget<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    parents<span class="token punctuation">[</span><span class="token function">make_pair</span><span class="token punctuation">(</span>xyUp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> xyUp<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">make_pair</span><span class="token punctuation">(</span>curNode<span class="token punctuation">.</span>coordX<span class="token punctuation">,</span> curNode<span class="token punctuation">.</span>coordY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    openNodes<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span><span class="token function">make_pair</span><span class="token punctuation">(</span>upNode<span class="token punctuation">,</span> upNode<span class="token punctuation">.</span>totalCost<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>upNodeXY<span class="token punctuation">.</span>first <span class="token operator">==</span> foodX <span class="token operator">&amp;&amp;</span> upNodeXY<span class="token punctuation">.</span>second <span class="token operator">==</span> foodY<span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token comment">// FOUND TARGET!</span>
+                        <span class="token keyword">return</span> upNode<span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">withinBounds</span><span class="token punctuation">(</span><span class="token function">Node</span><span class="token punctuation">(</span>curNode<span class="token punctuation">.</span>coordX<span class="token punctuation">,</span> curNode<span class="token punctuation">.</span>coordY <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>mSizeX<span class="token punctuation">,</span>mSizeY<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token comment">//Check within bounds XY</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>gameMap<span class="token punctuation">[</span>xyDown<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">[</span>xyDown<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">]</span> <span class="token operator">!=</span> <span class="token char">'%'</span><span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token comment">// Check if not wall                </span>
+                <span class="token comment">//Ready to add to queue</span>
+                <span class="token comment">//Check the dist from start</span>
+                <span class="token keyword">int</span> distStart <span class="token operator">=</span> curNode<span class="token punctuation">.</span>distFromStart <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+                <span class="token comment">//Heuristic dist from target</span>
+                <span class="token keyword">int</span> distTarget <span class="token operator">=</span> <span class="token function">abs</span><span class="token punctuation">(</span>xyDown<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">-</span> foodX<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token function">abs</span><span class="token punctuation">(</span>xyDown<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">-</span> foodY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                pair<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token operator">></span> upNodeXY <span class="token operator">=</span> <span class="token function">make_pair</span><span class="token punctuation">(</span>xyDown<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> xyDown<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">find</span><span class="token punctuation">(</span>closedNodes<span class="token punctuation">.</span><span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> closedNodes<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> upNodeXY<span class="token punctuation">)</span> <span class="token operator">!=</span> closedNodes<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">//Check if node is already closed</span>
+                    <span class="token comment">//It is a closed node &lt;img draggable="false" role="img" class="emoji" alt="😦" src="https://s0.wp.com/wp-content/mu-plugins/wpcom-smileys/twemoji/2/svg/1f626.svg"></span>
+                <span class="token punctuation">}</span>
+                <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                    Node <span class="token function">upNode</span><span class="token punctuation">(</span>upNodeXY<span class="token punctuation">.</span>first<span class="token punctuation">,</span> upNodeXY<span class="token punctuation">.</span>second<span class="token punctuation">,</span> curNode<span class="token punctuation">,</span> distStart<span class="token punctuation">,</span> distTarget<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    parents<span class="token punctuation">[</span><span class="token function">make_pair</span><span class="token punctuation">(</span>xyDown<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> xyDown<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">make_pair</span><span class="token punctuation">(</span>curNode<span class="token punctuation">.</span>coordX<span class="token punctuation">,</span> curNode<span class="token punctuation">.</span>coordY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    openNodes<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span><span class="token function">make_pair</span><span class="token punctuation">(</span>upNode<span class="token punctuation">,</span> upNode<span class="token punctuation">.</span>totalCost<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>upNodeXY<span class="token punctuation">.</span>first <span class="token operator">==</span> foodX <span class="token operator">&amp;&amp;</span> upNodeXY<span class="token punctuation">.</span>second <span class="token operator">==</span> foodY<span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token comment">// FOUND TARGET!</span>
+                        <span class="token keyword">return</span> upNode<span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">withinBounds</span><span class="token punctuation">(</span><span class="token function">Node</span><span class="token punctuation">(</span>curNode<span class="token punctuation">.</span>coordX <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">,</span> curNode<span class="token punctuation">.</span>coordY<span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>mSizeX<span class="token punctuation">,</span>mSizeY<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token comment">//Check within bounds XY</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>gameMap<span class="token punctuation">[</span>xyLeft<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">[</span>xyLeft<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">]</span> <span class="token operator">!=</span> <span class="token char">'%'</span><span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token comment">// Check if not wall                </span>
+                <span class="token comment">//Ready to add to queue</span>
+                <span class="token comment">//Check the dist from start</span>
+                <span class="token keyword">int</span> distStart <span class="token operator">=</span> curNode<span class="token punctuation">.</span>distFromStart <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+                <span class="token comment">//Heuristic dist from target</span>
+                <span class="token keyword">int</span> distTarget <span class="token operator">=</span> <span class="token function">abs</span><span class="token punctuation">(</span>xyLeft<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">-</span> foodX<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token function">abs</span><span class="token punctuation">(</span>xyLeft<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">-</span> foodY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                pair<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token operator">></span> upNodeXY <span class="token operator">=</span> <span class="token function">make_pair</span><span class="token punctuation">(</span>xyLeft<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> xyLeft<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">find</span><span class="token punctuation">(</span>closedNodes<span class="token punctuation">.</span><span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> closedNodes<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> upNodeXY<span class="token punctuation">)</span> <span class="token operator">!=</span> closedNodes<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">//Check if node is already closed</span>
+                    <span class="token comment">//It is a closed node &lt;img draggable="false" role="img" class="emoji" alt="😦" src="https://s0.wp.com/wp-content/mu-plugins/wpcom-smileys/twemoji/2/svg/1f626.svg"></span>
+                <span class="token punctuation">}</span>
+                <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                    Node <span class="token function">upNode</span><span class="token punctuation">(</span>upNodeXY<span class="token punctuation">.</span>first<span class="token punctuation">,</span> upNodeXY<span class="token punctuation">.</span>second<span class="token punctuation">,</span> curNode<span class="token punctuation">,</span> distStart<span class="token punctuation">,</span> distTarget<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    parents<span class="token punctuation">[</span><span class="token function">make_pair</span><span class="token punctuation">(</span>xyLeft<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> xyLeft<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">make_pair</span><span class="token punctuation">(</span>curNode<span class="token punctuation">.</span>coordX<span class="token punctuation">,</span> curNode<span class="token punctuation">.</span>coordY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    openNodes<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span><span class="token function">make_pair</span><span class="token punctuation">(</span>upNode<span class="token punctuation">,</span> upNode<span class="token punctuation">.</span>totalCost<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>upNodeXY<span class="token punctuation">.</span>first <span class="token operator">==</span> foodX <span class="token operator">&amp;&amp;</span> upNodeXY<span class="token punctuation">.</span>second <span class="token operator">==</span> foodY<span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token comment">// FOUND TARGET!</span>
+                        <span class="token keyword">return</span> upNode<span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">withinBounds</span><span class="token punctuation">(</span><span class="token function">Node</span><span class="token punctuation">(</span>curNode<span class="token punctuation">.</span>coordX <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">,</span> curNode<span class="token punctuation">.</span>coordY<span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>mSizeX<span class="token punctuation">,</span>mSizeY<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token comment">//Check within bounds XY</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>gameMap<span class="token punctuation">[</span>xyRight<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">[</span>xyRight<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">]</span> <span class="token operator">!=</span> <span class="token char">'%'</span><span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token comment">// Check if not wall                </span>
+                <span class="token comment">//Ready to add to queue</span>
+                <span class="token comment">//Check the dist from start</span>
+                <span class="token keyword">int</span> distStart <span class="token operator">=</span> curNode<span class="token punctuation">.</span>distFromStart <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+                <span class="token comment">//Heuristic dist from target</span>
+                <span class="token keyword">int</span> distTarget <span class="token operator">=</span> <span class="token function">abs</span><span class="token punctuation">(</span>xyRight<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">-</span> foodX<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token function">abs</span><span class="token punctuation">(</span>xyRight<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">-</span> foodY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                pair<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token operator">></span> upNodeXY <span class="token operator">=</span> <span class="token function">make_pair</span><span class="token punctuation">(</span>xyRight<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> xyRight<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">find</span><span class="token punctuation">(</span>closedNodes<span class="token punctuation">.</span><span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> closedNodes<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> upNodeXY<span class="token punctuation">)</span> <span class="token operator">!=</span> closedNodes<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">//Check if node is already closed</span>
+                    <span class="token comment">//It is a closed node &lt;img draggable="false" role="img" class="emoji" alt="😦" src="https://s0.wp.com/wp-content/mu-plugins/wpcom-smileys/twemoji/2/svg/1f626.svg"></span>
+                <span class="token punctuation">}</span>
+                <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                    Node <span class="token function">upNode</span><span class="token punctuation">(</span>upNodeXY<span class="token punctuation">.</span>first<span class="token punctuation">,</span> upNodeXY<span class="token punctuation">.</span>second<span class="token punctuation">,</span> curNode<span class="token punctuation">,</span> distStart<span class="token punctuation">,</span> distTarget<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    parents<span class="token punctuation">[</span><span class="token function">make_pair</span><span class="token punctuation">(</span>xyRight<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> xyRight<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">make_pair</span><span class="token punctuation">(</span>curNode<span class="token punctuation">.</span>coordX<span class="token punctuation">,</span> curNode<span class="token punctuation">.</span>coordY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    openNodes<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span><span class="token function">make_pair</span><span class="token punctuation">(</span>upNode<span class="token punctuation">,</span> upNode<span class="token punctuation">.</span>totalCost<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>upNodeXY<span class="token punctuation">.</span>first <span class="token operator">==</span> foodX <span class="token operator">&amp;&amp;</span> upNodeXY<span class="token punctuation">.</span>second <span class="token operator">==</span> foodY<span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token comment">// FOUND TARGET!</span>
+                        <span class="token keyword">return</span> upNode<span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+        closedNodes<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span><span class="token function">make_pair</span><span class="token punctuation">(</span>curNode<span class="token punctuation">.</span>coordX<span class="token punctuation">,</span> curNode<span class="token punctuation">.</span>coordY<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Put it in closed nodes now</span>
+        openNodes<span class="token punctuation">.</span><span class="token function">pop_front</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//Remove this node from openNodes</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>Now while this isn’t the most efficient code, it works for it’s purpose and I have tried to make it as descriptive and readable as possible.</p>
+<p>So it is an infinite loop that will keep cycling until it reaches the target node, and then returns that node.</p>
+<p>There is really one main evaluation function repeated four times for each adjacent node.</p>
+<p>So first we check if our node is within the bounds of the map:</p>
+<pre class="language-cpp" tabindex="0"><code class="language-cpp"><span class="token function">withinBounds</span><span class="token punctuation">(</span><span class="token function">Node</span><span class="token punctuation">(</span>curNode<span class="token punctuation">.</span>coordX<span class="token punctuation">,</span> curNode<span class="token punctuation">.</span>coordY <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>mSizeX<span class="token punctuation">,</span>mSizeY<span class="token punctuation">)</span></code></pre>
+<p>Then we check if it isn’t a wall:</p>
+<pre class="language-cpp" tabindex="0"><code class="language-cpp">gameMap<span class="token punctuation">[</span>xyUp<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">[</span>xyUp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">]</span> <span class="token operator">!=</span> <span class="token char">'%'</span></code></pre>
+<p>We then calculate the distances and costs of the node:</p>
+<pre class="language-cpp" tabindex="0"><code class="language-cpp"><span class="token comment">//Check the dist from start</span>
+<span class="token keyword">int</span> distStart <span class="token operator">=</span> curNode<span class="token punctuation">.</span>distFromStart <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+<span class="token comment">//Heuristic dist from target</span>
+<span class="token keyword">int</span> distTarget <span class="token operator">=</span> <span class="token function">abs</span><span class="token punctuation">(</span>xyUp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">-</span> foodX<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token function">abs</span><span class="token punctuation">(</span>xyUp<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">-</span> foodY<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>Then we check if the node is closed:</p>
+<pre class="language-cpp" tabindex="0"><code class="language-cpp"><span class="token function">find</span><span class="token punctuation">(</span>closedNodes<span class="token punctuation">.</span><span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> closedNodes<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> upNodeXY<span class="token punctuation">)</span> <span class="token operator">!=</span> closedNodes<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre>
+<p>If it isn’t we create the node, push it to openNodes, add the parent information to the parent map.</p>
+<pre class="language-cpp" tabindex="0"><code class="language-cpp">Node <span class="token function">upNode</span><span class="token punctuation">(</span>upNodeXY<span class="token punctuation">.</span>first<span class="token punctuation">,</span> upNodeXY<span class="token punctuation">.</span>second<span class="token punctuation">,</span> curNode<span class="token punctuation">,</span> distStart<span class="token punctuation">,</span> distTarget<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    parents<span class="token punctuation">[</span><span class="token function">make_pair</span><span class="token punctuation">(</span>xyUp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> xyUp<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">make_pair</span><span class="token punctuation">(</span>curNode<span class="token punctuation">.</span>coordX<span class="token punctuation">,</span> curNode<span class="token punctuation">.</span>coordY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    openNodes<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span><span class="token function">make_pair</span><span class="token punctuation">(</span>upNode<span class="token punctuation">,</span> upNode<span class="token punctuation">.</span>totalCost<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>Now the last thing is to check if it is the target, if yes, then return!</p>
+<pre class="language-cpp" tabindex="0"><code class="language-cpp"><span class="token keyword">if</span> <span class="token punctuation">(</span>upNodeXY<span class="token punctuation">.</span>first <span class="token operator">==</span> foodX <span class="token operator">&amp;&amp;</span> upNodeXY<span class="token punctuation">.</span>second <span class="token operator">==</span> foodY<span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token comment">// FOUND TARGET!</span>
+                        <span class="token keyword">return</span> upNode<span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span></code></pre>
+<p>That is repeated for all adjacent nodes.</p>
+<p>Now after it has returned the node, let’s find the path.</p>
+<pre class="language-cpp" tabindex="0"><code class="language-cpp">deque<span class="token operator">&lt;</span>pair<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token operator">>></span> path<span class="token punctuation">;</span>
+path<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span><span class="token function">make_pair</span><span class="token punctuation">(</span>target<span class="token punctuation">.</span>coordX<span class="token punctuation">,</span> target<span class="token punctuation">.</span>coordY<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+pair<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token operator">></span> curTarget <span class="token operator">=</span> parents<span class="token punctuation">[</span><span class="token function">make_pair</span><span class="token punctuation">(</span>target<span class="token punctuation">.</span>coordX<span class="token punctuation">,</span> target<span class="token punctuation">.</span>coordY<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+    path<span class="token punctuation">.</span><span class="token function">push_front</span><span class="token punctuation">(</span><span class="token function">make_pair</span><span class="token punctuation">(</span>curTarget<span class="token punctuation">.</span>first<span class="token punctuation">,</span> curTarget<span class="token punctuation">.</span>second<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">try</span><span class="token punctuation">{</span>
+        curTarget <span class="token operator">=</span> parents<span class="token punctuation">[</span>curTarget<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">catch</span> <span class="token punctuation">(</span>exception<span class="token operator">&amp;</span> e<span class="token punctuation">)</span><span class="token punctuation">{</span>
+        <span class="token keyword">break</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>This is quite simple, we create a double ended queue called path. Then we keep adding the current node to the front of the queue, then set the current node to its parent. When a parent doesn’t exist that means it is now at the start of the path, so it will raise an exception which we’ll just simply break from. Now the deque path contains the optimal path from Pacman to the food!</p>
+
+<ul class="links-nextprev"><li class="links-nextprev-next">Next →<br><a href="/blog/2017/06/20/school-study-leave-geofencing/">School Study Leave Geofencing-based Registration</a></li>
+</ul>
+
+			</heading-anchors>
+		</main>
+
+		
+		<footer>
+			<p>
+				<em><a href="/about">Raka Gunarto</a>'s Personal Blog. Any views expressed here are my own and mine alone.</em>
+			</p>
+		</footer>
+		
+
+		<!-- This page `/blog/2017/01/25/pacman-astar/` was built on 2026-01-29T11:24:52.629Z -->
+		<script type="module" src="/dist/4hdsf0nhkk.js"></script>
+	</body>
+</html>
