@@ -12,6 +12,8 @@
 
 	--background-color: #fff;
 
+	--warn: #fff0b6;
+
 	--text-color: var(--color-gray-90);
 	--text-color-link: #fa8072;
 	--text-color-link-active: #e9967a;
@@ -25,6 +27,8 @@
 	--color-gray-20: #e0e0e0;
 	--color-gray-50: #C0C0C0;
 	--color-gray-90: #dad8d8;
+
+	--warn: #a78912;
 
 	--text-color: var(--color-gray-90);
 	--text-color-link: #fa8072;
@@ -40,6 +44,8 @@
 		--color-gray-20: #e0e0e0;
 		--color-gray-50: #C0C0C0;
 		--color-gray-90: #dad8d8;
+
+		--warn: #a78912;
 
 		--text-color: var(--color-gray-90);
 		--text-color-link: #fa8072;
@@ -273,6 +279,15 @@ header {
 }
 .home-link:link:not(:hover) {
 	text-decoration: none;
+}
+
+/* Old post banner */
+.old-post-banner {
+	background-color: var(--warn);
+	color: var(--text-color);
+	border-radius: 4px;
+	padding: 1em;
+	margin-bottom: 1em;
 }
 
 /* Nav */

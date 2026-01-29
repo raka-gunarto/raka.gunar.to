@@ -126,6 +126,12 @@ export default async function(eleventyConfig) {
 	// https://www.11ty.dev/docs/copy/#emulate-passthrough-copy-during-serve
 
 	// eleventyConfig.setServerPassthroughCopyBehavior("passthrough");
+
+	eleventyConfig.addCollection("activePosts", (collectionApi) => {
+		return collectionApi.getFilteredByTag("posts").filter((item) => {
+			return !(item.data.tags && (item.data.tags.includes("old")));
+		});
+	});
 };
 
 export const config = {

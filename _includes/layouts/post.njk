@@ -4,6 +4,14 @@ layout: layouts/base.njk
 {# Only include the syntax highlighter CSS on blog posts, included with the CSS per-page bundle #}
 <style>{% include "node_modules/prismjs/themes/prism-okaidia.css" %}</style>
 <style>{% include "css/prism-diff.css" %}</style>
+
+{# Show migrated old post banner if old post #}
+{%- if tags and ('old' in tags) %}
+<div class="old-post-banner">
+	<p><strong>Note:</strong> This post was originally published on my old blog platform and has been migrated here for archival purposes. Some content or formatting may differ from the original.</p>
+</div>
+{%- endif %}
+
 <h1>{{ title }}</h1>
 
 <ul class="post-metadata">
