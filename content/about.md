@@ -77,4 +77,4 @@ also interest me.
 You made it this far, have a cat pic! *(powered by cataas.com)*
 
 
-<img src="https://cataas.com/cat"/>
+<img src="https://cataas.com/cat?type=small"/>
