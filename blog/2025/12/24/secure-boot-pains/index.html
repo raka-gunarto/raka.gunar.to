@@ -1,6 +1,4 @@
-<!doctype html>
-<html lang="en">
-	<head>
+<!DOCTYPE html><html lang="en"><head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Secure Boot Growing Pains</title>
@@ -418,6 +416,17 @@ header {
 .post-metadata time {
 	margin-right: 1em;
 }
+
+
+/* External Link Indicator */
+.external-link::after {
+content: "↗";
+padding-left: 0.2em;
+font-size: 0.8em;
+opacity: 0.7;
+display: inline-block;
+text-decoration: none;
+}
 /**
  * okaidia theme for JavaScript, CSS and HTML
  * Loosely based on Monokai textmate theme by http://www.monokai.nl/
@@ -626,10 +635,10 @@ pre[class*="language-diff-"] {
 	<li><a href="/tags/linux/" class="post-tag">linux</a></li>
 </ul>
 
-<p>I archived my decade old Windows install I've been moving from machine to machine since my school years, and installed PopOS on my main machine now (previously had Linux on a removable SSD). I'd like to share below what I learned about signing from the pain of setting up &quot;Secure Boot&quot; as I still wanted to dual boot Windows for games with draconian anti-cheats.</p>
+<p>I archived my decade old Windows install I've been moving from machine to machine since my school years, and installed PopOS on my main machine now (previously had Linux on a removable SSD). I'd like to share below what I learned about signing from the pain of setting up "Secure Boot" as I still wanted to dual boot Windows for games with draconian anti-cheats.</p>
 <h3 id="what-is-secure-boot">What is Secure Boot?</h3>
 <p>Secure boot is a mechanism in which the BIOS/UEFI verifies the signatures of the bootloader (the boot stage before the OS kernel). Most boards come preloaded with the Microsoft signing keys for Windows and Microsoft approved binaries. However you can enroll your own keys!</p>
-<p>So I set out and installed a utility called &quot;sbctl&quot; which helps you generate a key, enroll it in the BIOS, and sign your bootloader binary.</p>
+<p>So I set out and installed a utility called "sbctl" which helps you generate a key, enroll it in the BIOS, and sign your bootloader binary.</p>
 <h3 id="cool-that-works-right">Cool. That works right?</h3>
 <p>Not quite. I signed my EFI binaries and the system boots, and I was greeted with a text mode screen. The nvidia kernel modules failed to load because they were unsigned. As I didn’t really care too much about the actual integrity I tried adding “module.sig_enforce=0” to the kernel command line args. But it turns out there is this little snippet of code early in the kernel boot process on x86:</p>
 <pre class="language-c" tabindex="0"><code class="language-c"><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span> <span class="token keyword">const</span> <span class="token operator">*</span><span class="token function">arch_get_ima_policy</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span>
@@ -673,7 +682,8 @@ pre[class*="language-diff-"] {
 		</footer>
 		
 
-		<!-- This page `/blog/2025/12/24/secure-boot-pains/` was built on 2026-01-29T11:24:52.629Z -->
+		<!-- This page `/blog/2025/12/24/secure-boot-pains/` was built on 2026-01-30T15:23:11.215Z -->
 		<script type="module" src="/dist/4hdsf0nhkk.js"></script>
-	</body>
-</html>
+	
+
+</body></html>
