@@ -101,24 +101,44 @@
 	}
 }
 
-main {
-	view-transition-name: main;
+header {
+	view-transition-name: header;
+}
+
+/* Prevent header movement. Hide old header immediately so it doesn't bleed through transparent background */
+::view-transition-group(header) {
+	animation: none;
+}
+
+::view-transition-old(header) {
+	display: none;
+}
+
+::view-transition-new(header) {
+	animation: none;
+	mix-blend-mode: normal;
 }
 
 footer {
 	view-transition-name: footer;
 }
 
-::view-transition-new(main)
+/* Prevent footer movement (sliding) */
+::view-transition-group(footer) {
+	animation: none;
+}
+
+::view-transition-new(root)
 {
 	animation: slide-up 0.3s ease forwards;
 }
 
-::view-transition-old(main)
+::view-transition-old(root)
 {
 	animation: slide-up 0.05s ease reverse forwards;
 }
 
+/* Fade in footer after content is done */
 ::view-transition-new(footer)
 {
 	opacity: 0;
@@ -933,7 +953,7 @@ pair<span class="token operator">&lt;</span><span class="token keyword">int</spa
 		</footer>
 		
 
-		<!-- This page `/blog/2017/01/25/pacman-astar/` was built on 2026-01-30T15:23:11.216Z -->
+		<!-- This page `/blog/2017/01/25/pacman-astar/` was built on 2026-01-31T14:37:49.389Z -->
 		<script type="module" src="/dist/4hdsf0nhkk.js"></script>
 	
 
