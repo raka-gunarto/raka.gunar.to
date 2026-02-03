@@ -1,0 +1,754 @@
+<!DOCTYPE html><html lang="en"><head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Indonesia’s SIREKAP: A Case Study in Innovation Without Foundation</title>
+		<link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+		<!-- Google tag (gtag.js) -->
+		<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-H9QR43SSJG"></script>
+		
+		<meta name="description" content="A breakdown of the shortcomings of the SIREKAP system">
+		<link rel="alternate" href="/feed/feed.xml" type="application/atom+xml" title="Dead Letters">
+		
+		
+		
+		<style>/* This is an arbitrary CSS string added to the bundle */
+/* Defaults */
+:root {
+	--font-family: -apple-system, system-ui, sans-serif;
+	--font-family-monospace: Consolas, Menlo, Monaco, Andale Mono WT, Andale Mono, Lucida Console, Lucida Sans Typewriter, DejaVu Sans Mono, Bitstream Vera Sans Mono, Liberation Mono, Nimbus Mono L, Courier New, Courier, monospace;
+}
+
+/* Theme colors */
+:root {
+	--color-gray-20: #e0e0e0;
+	--color-gray-50: #C0C0C0;
+	--color-gray-90: #333;
+
+	--background-color: #fff;
+
+	--warn: #fff0b6;
+
+	--text-color: var(--color-gray-90);
+	--text-color-link: #fa8072;
+	--text-color-link-active: #e9967a;
+	--text-color-link-visited: #cd5c5c;
+
+	--syntax-tab-size: 2;
+}
+
+/* Dark theme colors */
+:root[data-theme="dark"] {
+	--color-gray-20: #e0e0e0;
+	--color-gray-50: #C0C0C0;
+	--color-gray-90: #dad8d8;
+
+	--warn: #a78912;
+
+	--text-color: var(--color-gray-90);
+	--text-color-link: #fa8072;
+	--text-color-link-active: #ffa07a;
+	--text-color-link-visited: #e9967a;
+
+	--background-color: #15202b;
+}
+
+/* Auto dark mode (when no manual preference is set) */
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme]) {
+		--color-gray-20: #e0e0e0;
+		--color-gray-50: #C0C0C0;
+		--color-gray-90: #dad8d8;
+
+		--warn: #a78912;
+
+		--text-color: var(--color-gray-90);
+		--text-color-link: #fa8072;
+		--text-color-link-active: #ffa07a;
+		--text-color-link-visited: #e9967a;
+
+		--background-color: #15202b;
+	}
+}
+
+
+/* Global stylesheet */
+* {
+	box-sizing: border-box;
+}
+
+@view-transition {
+	navigation: auto;
+}
+
+@keyframes slide-up {
+	from {
+		opacity: 0;
+		transform: translateY(50px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+header {
+	view-transition-name: header;
+}
+
+/* Prevent header movement. Hide old header immediately so it doesn't bleed through transparent background */
+::view-transition-group(header) {
+	animation: none;
+}
+
+::view-transition-old(header) {
+	display: none;
+}
+
+::view-transition-new(header) {
+	animation: none;
+	mix-blend-mode: normal;
+}
+
+footer {
+	view-transition-name: footer;
+}
+
+/* Prevent footer movement (sliding) */
+::view-transition-group(footer) {
+	animation: none;
+}
+
+::view-transition-new(root)
+{
+	animation: slide-up 0.3s ease forwards;
+}
+
+::view-transition-old(root)
+{
+	animation: slide-up 0.05s ease reverse forwards;
+}
+
+/* Fade in footer after content is done */
+::view-transition-new(footer)
+{
+	opacity: 0;
+	animation: fade-in 0.3s ease forwards;
+	animation-delay: 0.3s;
+}
+
+::view-transition-old(footer)
+{
+	display: none;
+}
+
+
+html,
+body {
+	padding: 0;
+	margin: 0 auto;
+	font-family: var(--font-family);
+	color: var(--text-color);
+	background-color: var(--background-color);
+}
+html {
+	overflow-y: scroll;
+}
+body {
+	max-width: 40em;
+}
+
+/* https://www.a11yproject.com/posts/how-to-hide-content/ */
+.visually-hidden:not(:focus):not(:active) {
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	height: 1px;
+	overflow: hidden;
+	position: absolute;
+	white-space: nowrap;
+	width: 1px;
+}
+
+/* Fluid images via https://www.zachleat.com/web/fluid-images/ */
+img{
+  max-width: 100%;
+}
+img[width][height] {
+  height: auto;
+}
+img[src$=".svg"] {
+  width: 100%;
+  height: auto;
+  max-width: none;
+}
+video,
+iframe {
+	width: 100%;
+	height: auto;
+}
+iframe {
+	aspect-ratio: 16/9;
+}
+
+p:last-child {
+	margin-bottom: 0;
+}
+p {
+	line-height: 1.5;
+}
+
+li {
+	line-height: 1.5;
+}
+
+a[href] {
+	color: var(--text-color-link);
+}
+a[href]:visited {
+	color: var(--text-color-link-visited);
+}
+a[href]:hover,
+a[href]:active {
+	color: var(--text-color-link-active);
+}
+
+main,
+footer {
+	padding: 1rem;
+}
+main :first-child {
+	margin-top: 0;
+}
+
+header {
+	border-bottom: 1px dashed var(--color-gray-20);
+}
+
+#skip-link {
+	text-decoration: none;
+	background: var(--background-color);
+	color: var(--text-color);
+	padding: 0.5rem 1rem;
+	border: 1px solid var(--color-gray-90);
+	border-radius: 2px;
+}
+
+/* Prevent visually-hidden skip link fom pushing content around when focused */
+#skip-link.visually-hidden:focus {
+	position: absolute;
+	top: 1rem;
+	left: 1rem;
+	/* Ensure it is positioned on top of everything else when it is shown */
+	z-index: 999;
+}
+
+.links-nextprev {
+	display: flex;
+	justify-content: space-between;
+	gap: .5em 1em;
+	list-style: "";
+	border-top: 1px dashed var(--color-gray-20);
+	padding: 1em 0;
+}
+.links-nextprev > * {
+	flex-grow: 1;
+}
+.links-nextprev-next {
+	text-align: right;
+}
+
+table {
+	margin: 1em 0;
+}
+table td,
+table th {
+	padding-right: 1em;
+}
+
+pre,
+code {
+	font-family: var(--font-family-monospace);
+}
+pre:not([class*="language-"]) {
+	margin: .5em 0;
+	line-height: 1.375; /* 22px /16 */
+	-moz-tab-size: var(--syntax-tab-size);
+	-o-tab-size: var(--syntax-tab-size);
+	tab-size: var(--syntax-tab-size);
+	-webkit-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+	direction: ltr;
+	text-align: left;
+	white-space: pre;
+	word-spacing: normal;
+	word-break: normal;
+	overflow-x: auto;
+}
+code {
+	word-break: break-all;
+}
+
+/* Header */
+header {
+	display: flex;
+	gap: 1em;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1em;
+}
+.home-link {
+	flex-grow: 1;
+	font-size: 1em; /* 16px /16 */
+	font-weight: 700;
+}
+.home-link:link:not(:hover) {
+	text-decoration: none;
+}
+
+/* Old post banner */
+.old-post-banner {
+	background-color: var(--warn);
+	color: var(--text-color);
+	border-radius: 4px;
+	padding: 1em;
+	margin-bottom: 1em;
+}
+
+/* Nav */
+.nav {
+	display: flex;
+	gap: .5em 1em;
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+.nav-item {
+	display: inline-block;
+}
+.nav-item a[href]:not(:hover) {
+	text-decoration: none;
+}
+.nav a[href][aria-current="page"] {
+	text-decoration: underline;
+}
+
+/* Theme toggle */
+.theme-toggle {
+	background: none;
+	border: 1px solid var(--color-gray-50);
+	border-radius: 4px;
+	color: var(--text-color);
+	cursor: pointer;
+	font-size: 0.8em;
+	padding: 0.25em 0.5em;
+	transition: all 0.2s ease;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 2.5em;
+}
+.theme-toggle:hover {
+	border-color: var(--text-color-link);
+	background-color: var(--color-gray-20);
+	opacity: 0.8;
+}
+.theme-toggle:focus {
+	outline: 2px solid var(--text-color-link);
+	outline-offset: 2px;
+}
+
+/* Posts list */
+.postlist {
+	counter-reset: start-from var(--postlist-index);
+	list-style: none;
+	padding: 0;
+	padding-left: 1.5rem;
+}
+.postlist-item {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	counter-increment: start-from -1;
+	margin-bottom: 1em;
+}
+.postlist-item:before {
+	display: inline-block;
+	pointer-events: none;
+	content: "" counter(start-from, decimal-leading-zero) ". ";
+	line-height: 100%;
+	text-align: right;
+	margin-left: -1.5rem;
+}
+.postlist-date,
+.postlist-item:before {
+	font-size: 0.8125em; /* 13px /16 */
+	color: var(--color-gray-90);
+}
+.postlist-date {
+	word-spacing: -0.5px;
+}
+.postlist-link {
+	font-size: 1.1875em; /* 19px /16 */
+	font-weight: 700;
+	flex-basis: calc(100% - 1.5rem);
+	padding-left: .25em;
+	padding-right: .5em;
+	text-underline-position: from-font;
+	text-underline-offset: 0;
+	text-decoration-thickness: 1px;
+}
+.postlist-item-active .postlist-link {
+	font-weight: bold;
+}
+
+/* Tags */
+.post-tag {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	text-transform: capitalize;
+	font-style: italic;
+}
+.postlist-item > .post-tag {
+	align-self: center;
+}
+
+/* Tags list */
+.post-metadata {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: .5em;
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+.post-metadata time {
+	margin-right: 1em;
+}
+
+
+/* External Link Indicator */
+.external-link::after {
+content: "↗";
+padding-left: 0.2em;
+font-size: 0.8em;
+opacity: 0.7;
+display: inline-block;
+text-decoration: none;
+}
+
+/* Stylize hr */
+hr {
+	border: none;
+}
+
+hr::after {
+	content: ". . .";
+	display: block;
+	text-align: center;
+}
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+
+code[class*="language-"],
+pre[class*="language-"] {
+	color: #f8f8f2;
+	background: none;
+	text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+	font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+	font-size: 1em;
+	text-align: left;
+	white-space: pre;
+	word-spacing: normal;
+	word-break: normal;
+	word-wrap: normal;
+	line-height: 1.5;
+
+	-moz-tab-size: 4;
+	-o-tab-size: 4;
+	tab-size: 4;
+
+	-webkit-hyphens: none;
+	-moz-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+}
+
+/* Code blocks */
+pre[class*="language-"] {
+	padding: 1em;
+	margin: .5em 0;
+	overflow: auto;
+	border-radius: 0.3em;
+}
+
+:not(pre) > code[class*="language-"],
+pre[class*="language-"] {
+	background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*="language-"] {
+	padding: .1em;
+	border-radius: .3em;
+	white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+	color: #8292a2;
+}
+
+.token.punctuation {
+	color: #f8f8f2;
+}
+
+.token.namespace {
+	opacity: .7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+	color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+	color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+	color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+	color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+	color: #e6db74;
+}
+
+.token.keyword {
+	color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+	color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+	font-weight: bold;
+}
+.token.italic {
+	font-style: italic;
+}
+
+.token.entity {
+	cursor: help;
+}
+/*
+ * New diff- syntax
+ */
+
+pre[class*="language-diff-"] {
+	--eleventy-code-padding: 1.25em;
+	padding-left: var(--eleventy-code-padding);
+	padding-right: var(--eleventy-code-padding);
+}
+.token.deleted {
+	background-color: hsl(0, 51%, 37%);
+	color: inherit;
+}
+.token.inserted {
+	background-color: hsl(126, 31%, 39%);
+	color: inherit;
+}
+
+/* Make the + and - characters unselectable for copy/paste */
+.token.prefix.unchanged,
+.token.prefix.inserted,
+.token.prefix.deleted {
+	-webkit-user-select: none;
+	user-select: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.token.prefix.inserted,
+.token.prefix.deleted {
+	width: var(--eleventy-code-padding);
+	background-color: rgba(0,0,0,.2);
+}
+
+/* Optional: full-width background color */
+.token.inserted:not(.prefix),
+.token.deleted:not(.prefix) {
+	display: block;
+	margin-left: calc(-1 * var(--eleventy-code-padding));
+	margin-right: calc(-1 * var(--eleventy-code-padding));
+	text-decoration: none; /* override del, ins, mark defaults */
+	color: inherit; /* override del, ins, mark defaults */
+}</style>
+		
+		
+		
+		
+	</head>
+	<body>
+		<a href="#main" id="skip-link" class="visually-hidden">Skip to main content</a>
+
+		<header>
+			<a href="/" class="home-link">Dead Letters</a>
+			<nav>
+				<h2 class="visually-hidden" id="top-level-navigation-menu">Top level navigation menu</h2>
+				<ul class="nav">
+					<li class="nav-item"><a href="/">Home</a></li>
+					<li class="nav-item"><a href="/blog/">Archive</a></li>
+					<li class="nav-item"><a href="/about/">About</a></li>
+					<li class="nav-item"><a href="/feed/feed.xml">Feed</a></li>
+					<li class="nav-item">
+						<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+							<span class="theme-toggle-icon">🌙</span>
+						</button>
+					</li>
+				</ul>
+			</nav>
+		</header>
+
+		<main id="main">
+			<heading-anchors>
+				
+
+
+
+
+
+<h1 id="indonesia-s-sirekap-a-case-study-in-innovation-without-foundation">Indonesia’s SIREKAP: A Case Study in Innovation Without Foundation</h1>
+
+<ul class="post-metadata">
+	<li><time datetime="2024-03-10">10 March 2024</time></li>
+	<li><a href="/tags/opinion/" class="post-tag">opinion</a></li>
+</ul>
+
+<p>Launched with the promise of enhancing transparency and efficiency in the 2024 Presidential Elections, SIREKAP aimed to leverage Optical Character and Mark Recognition (OCR / OMR) technology to accurately and easily count ballots for a live quick count. However, its implementation has been marred by controversy, raising questions about the system’s reliability, security, and overall effectiveness.</p>
+<p>The controversy around SIREKAP revolves around its inadequacies in handing the logistical and technical demands of Indonesia’s vast electoral landscape. Issues with the system ranges from slow processing times to more severe concerns about data security and potential data manipulation. These challenges have not only cast doubt on the system’s ability to deliver accurate quick count results but also raises questions on the readiness of deploying such technologies in the critical democratic process, from a trusted government entity no less.</p>
+<p>The system’s rollout, criticized for its high cost and the myriad of issues encountered, serves as a cautionary tale of the pitfalls of rushed digitalisation in highly sensitive and complex environments like national elections.</p>
+<hr>
+<h3 id="lack-of-communication-a-catalyst-for-confusion">Lack of Communication: A Catalyst for Confusion</h3>
+<p>One of the primary issues of SIREKAP’s rollout is the lack of communication from the government — it came out of nowhere. This led to an immediate distrust from the public when their first exposure came from a video of the system apparently inflating votes for a particular candidate. The way the data is presented can also be easily misunderstood as a new system to provide the final authoritative results of the election, when SIREKAP is only supplementary to the final manual count with the main objective of transparency. The public could have benefitted in being briefed on the rollout of the new system, including its potential limitations.</p>
+<p>This lack of public preparation was ultimately a show in recklessness and hubris, which led to a firework display of misinformation across social media. Governmental elections fundamentally influence a nation’s social behaviour, and the government must take responsibility in ensuring clear communication. When this trust falls apart, the legions of for-profit misleading media and paid keyboard warriors “buzzers” pounce on the opportunity to fabricate any narrative they desire.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center"></th>
+<th style="text-align:center"></th>
+<th style="text-align:center"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><img src="/blog/2024/03/10/sirekap/eIV8IAjsOh-442.webp" alt="Twitter post accusing a conspiracy" loading="lazy" decoding="async" width="442" height="498"></td>
+<td style="text-align:center"><img src="/blog/2024/03/10/sirekap/f-tSeNkPCf-640.webp" alt="METRO TV with alleging &quot;marking up&quot; votes" loading="lazy" decoding="async" width="640" height="429"></td>
+<td style="text-align:center"><img src="/blog/2024/03/10/sirekap/vuVZwUPXLd-640.webp" alt="Youtube video alleging SIREKAP works with China" loading="lazy" decoding="async" width="640" height="514"></td>
+</tr>
+</tbody>
+</table>
+<p>These basic communication failures undermine public trust in the electoral process, risking widespread unrest and eroding the foundational confidence in our democratic system.</p>
+<h3 id="design-and-usability-overlooked-real-world-complexities">Design and Usability: Overlooked Real-World Complexities</h3>
+<p>In theory, using computer vision to digitise and automate vote counting was a good step in election modernisation and transparency. However, the execution lacks consideration of the variability in image quality and user behaviour. This oversight led to significant data inaccuracies, suggesting a disconnect between the system’s designers and the actual users.</p>
+<p>The user interface (UI) did not guide or restrict user submissions to ensure adequate image quality, a must-have for reliable computer vision performance. There appears to have been an oversight in testing real-world scenarios — such as poor lighting and poor camera/image quality — that lead to the major issues encountered in the 2024 elections. In addition, there was a clear lack of user training or instructions, seen in the pictures below:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center"></th>
+<th style="text-align:center"></th>
+<th style="text-align:center"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><img src="/blog/2024/03/10/sirekap/1lk3yD-gT1-636.webp" alt="" loading="lazy" decoding="async" width="636" height="1130"></td>
+<td style="text-align:center"><img src="/blog/2024/03/10/sirekap/Bmcy_NvlRd-636.webp" alt="" loading="lazy" decoding="async" width="636" height="1130"></td>
+<td style="text-align:center"><img src="/blog/2024/03/10/sirekap/1Jjgy1Mb6h-640.webp" alt="" loading="lazy" decoding="async" width="640" height="990"></td>
+</tr>
+</tbody>
+</table>
+<p>Moreover, the forms have clearly been designed with computer vision in mind, the presence of an AprilTag (a fiducial marker used in computer vision applications) and the checkerboard corners being prime examples. When inspecting the Android app however, these markers seem to be there for decoration, as there is no requirement of their presence. Stricter image validation and prompting for image recapture had the potential to greatly reduce the issues observed and improve the system’s robustness.</p>
+<p>Even more puzzling, there seems to be a lack of simple data validation. Given the relationships between the data in the forms — like candidate votes and the total number of valid ballots — a logical check to confirm these figures aligns should have been in place. Inputs failing to meet the logical relationships should have triggered rejections, or at least invalidations for manual review by KPU. Instead these values were allowed, leading to inaccuracies being propagated through to the preliminary / quick count results shown to the public.</p>
+<p><img src="/blog/2024/03/10/sirekap/kuwePdQBM1-720.webp" alt="" loading="lazy" decoding="async" width="720" height="182"></p>
+<p>Finally, the system’s data submission flow had some questionable decisions. Staff at polling stations were barred from manually correcting data from erroneous OCR/OMR results, with the app guiding them to simply mark them as errors for review by KPU and proceed. With results having a default state of being valid, users can forego checking the results and click submit, allowing the possibility of unverified submissions due to user fatigue or frustration. Users have reported that each submission attempt can take up to 10 minutes, which makes the scenario of user fatigue very possible. Ironically, these design choices contradicted the system’s intended purpose of streamlining data entry.</p>
+<pre class="language-java" tabindex="0"><code class="language-java"><span class="token operator">&lt;</span><span class="token class-name">TextView</span> android<span class="token operator">:</span>textColor<span class="token operator">=</span><span class="token string">"@color/colorInfo60"</span> android<span class="token operator">:</span>id<span class="token operator">=</span><span class="token string">"@+id/text_caption_ppwp_hal_2"</span> android<span class="token operator">:</span>tag<span class="token operator">=</span><span class="token string">"binding_1"</span> android<span class="token operator">:</span>layout_width<span class="token operator">=</span><span class="token string">"wrap_content"</span> android<span class="token operator">:</span>layout_height<span class="token operator">=</span><span class="token string">"wrap_content"</span> android<span class="token operator">:</span>layout_marginBottom<span class="token operator">=</span><span class="token string">"8dp"</span> android<span class="token operator">:</span>text<span class="token operator">=</span><span class="token string">"Pada halaman ini Anda hanya perlu menandai sesuai/tidak sesuai dan tidak perlu memberikan koreksi angka."</span> android<span class="token operator">:</span>paddingStart<span class="token operator">=</span><span class="token string">"24dp"</span> android<span class="token operator">:</span>paddingEnd<span class="token operator">=</span><span class="token string">"24dp"</span> style<span class="token operator">=</span><span class="token string">"@style/TextAppearance.MaterialComponents.Caption"</span><span class="token operator">/</span><span class="token operator">&gt;</span></code></pre>
+<h3 id="ocr-omr-an-overreliance-on-imperfect-technology">OCR/OMR: An overreliance on imperfect technology</h3>
+<p>OCR/OMR (Optical Character / Mark Recognition) is not novel technology. They are computer vision techniques to recognise characters and markings. OMR dates back to the mid 1900s and has since been widely used for automated scoring of multiple choice exams. It is a simple technology to recognise marks made on paper in predetermined locations. OCR however is more complex involving recognition of printed characters. This is more challenging especially when dealing with handwritten digits, which may have some variance.</p>
+<p>The expectation that accurate OCR/OMR results could be obtained from images captured under less than ideal conditions — such as varied angles and lighting from budget cameraphones — is optimistic at best. This process is further compromised by relying on a single error check, which requires proactive user action for verification. It is made even worse that the application runs client side TensorFlow models on these budget devices for OCR, whereby many users have ignored the digit formatting guidelines on the form, rendering the model useless in some cases.</p>
+<p>Reverse engineering reveals OMR is attempted first, falling back to the less reliable OCR if it fails. The OMR fails when not enough circles are detected on the form segment for each digit column. Many forms however appear creased, likely from folding, with creases intersecting crucial areas, like the ‘8’ bubble in the second candidate’s section, risking misinterpretation or missed detections.</p>
+<p><a href="https://docs.google.com/presentation/d/1YEWkZf19f8jlqR-fczvUK9STbG8fHJQNDzvwcDi4VAA/edit?usp=sharing" class="external-link" target="_blank" rel="noopener noreferrer">OCR/OMR Analysis</a></p>
+<p><img src="/blog/2024/03/10/sirekap/Wj8nrnTphQ-720.webp" alt="" loading="lazy" decoding="async" width="720" height="405"></p>
+<p>Simply allowing users to modify erroneous results directly or stricter image validation using the previously mentioned computer vision markers would have greatly improved the accuracy of the system’s results.</p>
+<h3 id="infrastructure-unprepared-for-the-demands-of-reality">Infrastructure: Unprepared for the Demands of Reality</h3>
+<p>Numerous users have reported a decline of the system’s responsiveness in peak times. There are reports of image uploads taking longer than 5 minutes. Considering their choice of deploying on public cloud infrastructure, scaling should not have been an issue with the many methods available for cloud solutions.</p>
+<p>This brings us to the next problem, the use of public cloud for a system in a sensitive context such as presidential elections. Although not inherently an issue, the use of public cloud raises additional concerns regarding data sovereignty and security. While cloud services offer scalability (seemingly unused) and flexibility, the sensitivity of election data — even supplemental — requires extra care and protection that was not adequately considered in the SIREKAP system.</p>
+<p>A hybrid cloud approach could have been better suited as sensitive operations and data can be kept on-premises and within borders, with other functions such as public data replication and access being offloaded to the public cloud. Stress testing infrastructure under simulated peak load is also essential to ensure quality of service during live traffic.</p>
+<h3 id="security-a-critical-oversight">Security: A Critical Oversight</h3>
+<p>The security strategy (or lack thereof) for SIREKAP is maybe the second-most alarming aspect of the system, next to the overreliance of OCR/OMR. In today’s era of cyber threats, the system had an attack surface that was too exposed for comfort.</p>
+<p>There is simply no reason for the authentication and data submission APIs for the system to be public facing. These should have been gated behind a proxy, with an added layer of protection through secure cryptographic means such as client certificates. App inspections and user reports also indicate a lack of two-factor authentication. While the system uses a known good implementation of OAuth (Keycloak), the lack of two-factor authentication makes credential theft trivial.</p>
+<p>The security measures to prevent unauthorised access and data integrity, given the stakes in this context, is insufficient. The author calls for a full security audit by an independent third party to be made against the SIREKAP system with the results published to the public domain.</p>
+<h3 id="conclusion">Conclusion</h3>
+<p>SIREKAP’s deployment highlights the necessity of real-world considerations during system design, robust infrastructure, and security for systems in sensitive contexts such as elections. The lessons from this experience shows how important it is to have a solid testing strategy and a user-centric design. As we reflect on these lessons, the path forward must involve a commitment to ensure technological innovations are implemented with the utmost care of integrity and reliability, especially when it is concerned with the democratic process.</p>
+
+<ul class="links-nextprev"><li class="links-nextprev-prev">← Previous<br> <a href="/blog/2017/06/20/school-study-leave-geofencing/">School Study Leave Geofencing-based Registration</a></li><li class="links-nextprev-next">Next →<br><a href="/blog/2025/12/24/secure-boot-pains/">Secure Boot Growing Pains</a></li>
+</ul>
+
+			</heading-anchors>
+		</main>
+
+		
+		<footer>
+			<p>
+				<em><a href="/about">Raka Gunarto</a>'s Personal Blog. Any views expressed here are my own and mine alone.</em>
+			</p>
+		</footer>
+		
+
+		<!-- This page `/blog/2024/03/10/sirekap/` was built on 2026-02-03T23:33:20.075Z -->
+		<script type="module" src="/dist/TyXGoSlcTl.js"></script>
+	
+
+</body></html>
