@@ -51,6 +51,12 @@
 
 		{#- Add the heading-anchors web component to the JavaScript bundle #}
 		<script type="module">{% include "node_modules/@zachleat/heading-anchors/heading-anchors.js" %}</script>
+		<script>{% include "node_modules/medium-zoom/dist/medium-zoom.min.js" %}</script>
+		<script>
+			mediumZoom('img', {
+				background: 'rgba(0, 0, 0, 0.8)',
+			})
+		</script>
 	</head>
 	<body>
 		<a href="#main" id="skip-link" class="visually-hidden">Skip to main content</a>
