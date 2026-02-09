@@ -69,7 +69,7 @@ also interest me.
 ## Connect
 
 - [GitHub](https://github.com/raka-gunarto)
-- [LinkedIn](https://linkedin.com/raka-gunarto)
+- [LinkedIn](https://linkedin.com/in/raka-gunarto)
 - [Email](mailto:rakagunarto@gmail.com)
 
 ## Cat
