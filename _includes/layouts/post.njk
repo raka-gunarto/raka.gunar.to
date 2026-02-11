@@ -13,6 +13,7 @@ layout: layouts/base.njk
 {%- endif %}
 
 <h1>{{ title }}</h1>
+<p><em>{{ description }}</em></p>
 
 <ul class="post-metadata">
 	<li><time datetime="{{ page.date | htmlDateString }}">{{ page.date | readableDate }}</time></li>
