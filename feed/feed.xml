@@ -48,7 +48,7 @@ up a proper sandboxed environment for an OpenClaw deployment.&lt;/p&gt;
 &lt;p&gt;The scariest thing about OpenClaw is the massive attack surface for prompt injection.
 Ignoring all the coding related bugs in the project, like CVE-2026-25253 which lets
 you give the victim a link that will start a websocket connection to your own listener
-and it will just happily hand hand over its auth token (lol?), there are so many channels
+and it will just happily hand over its auth token (lol?), there are so many channels
 that the LLM can receive unstrusted input from. Emails, X (twitter) posts, slack channel
 posts, etc.&lt;/p&gt;
 &lt;p&gt;OpenClaw (or any connected AI agent afaik) should be treated as a guest in your house that can be hypnotized by a stranger
