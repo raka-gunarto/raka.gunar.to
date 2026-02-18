@@ -10,7 +10,7 @@ tags: ["opinion"]
 The [Slopinator 9000](https://github.com/slopinator-9000) is satire. The README says so, twice.
 The caution banner says so. The publishing steps are no-ops. I named the GitHub project and account
 "slopinator-9000". I genuinely did not think I needed to be more obvious about it.
-[text](about:blank#blocked)
+
 The premise is a direct joke about "velocity culture", the attitude in tech where shipping anything,
 fast, is intrinsically virtuous regardless of whether it's original, useful, or good. The project automates
 the churn of new (most likely AI generated) projects I see constantly. It scouts what's popular, launders 
