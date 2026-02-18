@@ -1,13 +1,13 @@
 <!DOCTYPE html><html lang="en"><head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>School Study Leave Geofencing-based Registration</title>
+		<title>I Built a Slop Factory and a Bot Wanted To Feature It</title>
 		<link rel="icon" href="/favicon.ico" type="image/x-icon">
 
 		<!-- Google tag (gtag.js) -->
 		<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-H9QR43SSJG"></script>
 		
-		<meta name="description" content="Geofencing on Android, and creating an app with the school for auto registration on study leave">
+		<meta name="description" content="Building a satirical AI slop generator, getting auto-scouted by what is almost certainly another bot, and why the internet is slowly eating itself">
 		<link rel="alternate" href="/feed/feed.xml" type="application/atom+xml" title="Dead Letters">
 		
 		
@@ -660,28 +660,72 @@ pre[class*="language-diff-"] {
 
 
 
-<div class="old-post-banner">
-	<p><strong>Note:</strong> This post was originally published on my old blog platform and has been migrated here for archival purposes. Some content or formatting may differ from the original.</p>
-</div>
 
-<h1 id="school-study-leave-geofencing-based-registration">School Study Leave Geofencing-based Registration</h1>
-<p><em>Geofencing on Android, and creating an app with the school for auto registration on study leave</em></p>
+<h1 id="i-built-a-slop-factory-and-a-bot-wanted-to-feature-it">I Built a Slop Factory and a Bot Wanted To Feature It</h1>
+<p><em>Building a satirical AI slop generator, getting auto-scouted by what is almost certainly another bot, and why the internet is slowly eating itself</em></p>
 
 <ul class="post-metadata">
-	<li><time datetime="2017-06-20">20 June 2017</time></li>
-	<li><a href="/tags/old/" class="post-tag">old</a></li>
+	<li><time datetime="2026-02-18">18 February 2026</time></li>
+	<li><a href="/tags/opinion/" class="post-tag">opinion</a></li>
 </ul>
 
-<p>Recently, I’ve been reading and trying to implement geofencing on Android.</p>
-<p>So far it has been quite successful, I have implemented a working project that has a geofence around my school and alerts to user to login and logout on entering or exiting the school grounds.</p>
-<p>This app was intended as a solution to student registration during study leave in my school, as during exams students can come and go as they like. The school already had a solution of using a login page and a google form to login/logout to school, but many students forgot or were too lazy so therefore the solution wasn’t very good. This imposed a health and safety risk, because then the school wouldn’t know which students are in school during an emergency.</p>
-<p>So using geofencing, I created an app that would send a notification to the student that links to their auto-filled google form for login when entering and for logout when exiting.</p>
-<p>I have shown the app to the school and they liked it, so I’m continuing to improve the app and fix bugs as well as testing it with testers.</p>
-<p><img src="/blog/2017/06/20/school-study-leave-geofencing/tyXBduMseR-226.webp" alt="" loading="lazy" decoding="async" width="226" height="403">
-<img src="/blog/2017/06/20/school-study-leave-geofencing/SLBry4L1xk-226.webp" alt="" loading="lazy" decoding="async" width="226" height="403">
-<img src="/blog/2017/06/20/school-study-leave-geofencing/ILbCuHwm0F-226.webp" alt="" loading="lazy" decoding="async" width="226" height="403"></p>
+<h3 id="the-slopinator-9000">The Slopinator 9000</h3>
+<p>The <a href="https://github.com/slopinator-9000" class="external-link" target="_blank" rel="noopener noreferrer">Slopinator 9000</a> is satire. The README says so, twice.
+The caution banner says so. The publishing steps are no-ops. I named the GitHub project and account
+"slopinator-9000". I genuinely did not think I needed to be more obvious about it.</p>
+<p>The premise is a direct joke about "velocity culture", the attitude in tech where shipping anything,
+fast, is intrinsically virtuous regardless of whether it's original, useful, or good. The project automates
+the churn of new (most likely AI generated) projects I see constantly. It scouts what's popular, launders
+it through an LLM to produce a "new idea", implements it with a coding agent, and announces it to the world. No human needed.</p>
+<p>And it was mostly one-shot implemented by Opus 4.6 too.</p>
+<p>I figured it'd get maybe three stars from people who thought it was funny and that would be that.</p>
+<h3 id="the-email">The Email</h3>
+<p>The same day I published it, I got this in my inbox:</p>
+<blockquote>
+<p>Hi there,</p>
+<p>I hope this message finds you well! I'm [name] from PitchHut. We came across your project Slopinator 9000
+and would love to invite you to showcase it on our platform...</p>
+</blockquote>
+<p>PitchHut had created a pitch page (probably autonomously with an LLM) for my satirical slop generator. Here is
+the preview they sent:</p>
+<blockquote>
+<p><em>The Slopinator 9000 is an autonomous pipeline that rapidly generates innovative ideas by analyzing
+trending repositories on GitHub and then translates those ideas into executable code with impressive
+speed.</em></p>
+</blockquote>
+<p>It was described as <strong>innovative</strong>. They included the caution banner
+("This project serves as a satirical piece") but then appears to sincerely list the features anyway.</p>
+<p>A bot scouting for interesting projects found my bot that generates fake interesting projects
+and decided it was an interesting project. I could not have written a better punchline.</p>
+<h3 id="dead-internet-theory">Dead Internet Theory</h3>
+<p>If you're not familiar, Dead Internet Theory is the idea that a growing percentage of internet
+traffic, content, and engagement is being generated by bots and AI systems rather than actual
+humans.</p>
+<p>The original theory was a bit more "conspiracy theory"-like: shadowy actors deliberately flooding the
+internet to manufacture consensus and manipulate behaviour. I think the reality is
+simply more depressing: nobody is coordinating this. It's just the natural outcome of
+optimizing for engagement at scale.</p>
+<ol>
+<li>AI agents scout for trending human-made content</li>
+<li>AI generates derivative content based on it</li>
+<li>AI publishes and announces that content</li>
+<li>AI platforms scout that content and promote it</li>
+<li>AI agents scout <em>that</em> and generate more derivative content</li>
+<li>...</li>
+</ol>
+<p>At every stage, something automated is pretending to do the job of a curious human being. And
+because each component is optimising for some local maxima ("is this trending?", "is this
+novel enough?"), nobody notices the whole system is just a hall of mirrors.</p>
+<p>The Slopinator 9000 got noticed within hours while my actual blog posts probably sit largely in silence. If I'm
+being honest with myself, the slop pipeline probably has better SEO than anything I've
+written with genuine effort.</p>
+<p>The internet has always had spam and noise. But generating
+low-quality content at scale used to have more friction: human time, money, human attention. That friction
+is gone now, the Slopinator 9000 can spin up a new "project" in under twelve hours. A bot
+can scout and push it in even less.</p>
+<p>And I'm not really sure what to think about it.</p>
 
-<ul class="links-nextprev"><li class="links-nextprev-prev">← Previous<br> <a href="/blog/2017/01/25/pacman-astar/">Pacman A* Pathfinding</a></li><li class="links-nextprev-next">Next →<br><a href="/blog/2024/03/10/sirekap/">Indonesia’s SIREKAP: A Case Study in Innovation Without Foundation</a></li>
+<ul class="links-nextprev"><li class="links-nextprev-prev">← Previous<br> <a href="/blog/2026/02/10/zero-trust-llm-agent/">The Plumber With A Skeleton Key</a></li>
 </ul>
 
 			</heading-anchors>
@@ -695,7 +739,7 @@ pre[class*="language-diff-"] {
 		</footer>
 		
 
-		<!-- This page `/blog/2017/06/20/school-study-leave-geofencing/` was built on 2026-02-18T14:25:15.715Z -->
+		<!-- This page `/blog/2026/02/18/slopinator-9000/` was built on 2026-02-18T14:25:15.716Z -->
 		<script type="module" src="/dist/TyXGoSlcTl.js"></script>
 	
 
