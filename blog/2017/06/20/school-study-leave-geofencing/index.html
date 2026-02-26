@@ -625,6 +625,67 @@ pre[class*="language-diff-"] {
 	margin-right: calc(-1 * var(--eleventy-code-padding));
 	text-decoration: none; /* override del, ins, mark defaults */
 	color: inherit; /* override del, ins, mark defaults */
+}
+/* ---- Reactions widget ---- */
+
+#reactions {
+	margin-top: 2.5em;
+	margin-bottom: 1.5em;
+	text-align: center;
+}
+
+.reactions-heading {
+	font-size: 0.95em;
+	color: var(--color-gray-50);
+	margin-bottom: 0.6em;
+}
+
+.reactions-row {
+	display: flex;
+	justify-content: center;
+	gap: 0.5em;
+	flex-wrap: wrap;
+}
+
+.reaction-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3em;
+	padding: 0.4em 0.7em;
+	border: 2px solid var(--color-gray-20);
+	border-radius: 9999px;
+	background: transparent;
+	cursor: pointer;
+	font-size: 1.15em;
+	color: var(--text-color);
+	transition: border-color 0.15s, background-color 0.15s, transform 0.1s;
+	user-select: none;
+	line-height: 1;
+}
+
+.reaction-btn:hover {
+	border-color: var(--text-color-link);
+	background: rgba(250, 128, 114, 0.08);
+}
+
+.reaction-btn:active {
+	transform: scale(0.93);
+}
+
+.reaction-btn.active {
+	border-color: var(--text-color-link);
+	background: rgba(250, 128, 114, 0.15);
+}
+
+.reaction-emoji {
+	font-size: 1.2em;
+	line-height: 1;
+}
+
+.reaction-count {
+	font-size: 0.85em;
+	min-width: 0.8em;
+	font-variant-numeric: tabular-nums;
 }</style>
 		
 		
@@ -681,6 +742,10 @@ pre[class*="language-diff-"] {
 <img src="/blog/2017/06/20/school-study-leave-geofencing/SLBry4L1xk-226.webp" alt="" loading="lazy" decoding="async" width="226" height="403">
 <img src="/blog/2017/06/20/school-study-leave-geofencing/ILbCuHwm0F-226.webp" alt="" loading="lazy" decoding="async" width="226" height="403"></p>
 
+
+
+<div id="reactions" data-slug="/blog/2017/06/20/school-study-leave-geofencing/"></div>
+<script src="/js/reactions.js" defer=""></script>
 <ul class="links-nextprev"><li class="links-nextprev-prev">← Previous<br> <a href="/blog/2017/01/25/pacman-astar/">Pacman A* Pathfinding</a></li><li class="links-nextprev-next">Next →<br><a href="/blog/2024/03/10/sirekap/">Indonesia’s SIREKAP: A Case Study in Innovation Without Foundation</a></li>
 </ul>
 
@@ -695,7 +760,7 @@ pre[class*="language-diff-"] {
 		</footer>
 		
 
-		<!-- This page `/blog/2017/06/20/school-study-leave-geofencing/` was built on 2026-02-26T10:17:25.983Z -->
+		<!-- This page `/blog/2017/06/20/school-study-leave-geofencing/` was built on 2026-02-26T12:01:29.870Z -->
 		<script type="module" src="/dist/TyXGoSlcTl.js"></script>
 	
 
