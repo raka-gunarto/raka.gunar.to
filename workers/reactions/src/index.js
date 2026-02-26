@@ -23,23 +23,34 @@ async function hashIP(ip) {
 }
 
 /**
- * Build a CORS-aware JSON response.
+ * Return CORS headers for the given origin.
  */
-function jsonResponse(body, status, origin, allowedOrigin) {
+function corsHeaders(origin, allowedOrigin) {
 	const headers = {
-		"Content-Type": "application/json",
 		"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 		"Access-Control-Allow-Headers": "Content-Type",
+		"Access-Control-Max-Age": "86400",
 	};
 
-	// In development allow any origin; in production restrict to the blog domain
 	if (allowedOrigin === "*" || origin === allowedOrigin) {
 		headers["Access-Control-Allow-Origin"] = origin || "*";
 	} else if (allowedOrigin) {
 		headers["Access-Control-Allow-Origin"] = allowedOrigin;
 	}
 
-	return new Response(JSON.stringify(body), { status, headers });
+	return headers;
+}
+
+/**
+ * Build a CORS-aware JSON response.
+ */
+function jsonResponse(body, status, origin, allowedOrigin) {
+	const headers = {
+		...corsHeaders(origin, allowedOrigin),
+		"Content-Type": "application/json",
+	};
+
+	return new Response(body != null ? JSON.stringify(body) : null, { status, headers });
 }
 
 /**
@@ -157,7 +168,10 @@ export default {
 
 		// Handle CORS preflight
 		if (request.method === "OPTIONS") {
-			return jsonResponse(null, 204, origin, allowedOrigin);
+			return new Response(null, {
+				status: 204,
+				headers: corsHeaders(origin, allowedOrigin),
+			});
 		}
 
 		const url = new URL(request.url);
