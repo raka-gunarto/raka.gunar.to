@@ -1,0 +1,11 @@
+name = "blog-reactions"
+main = "src/index.js"
+compatibility_date = "2026-02-26"
+
+[vars]
+ALLOWED_ORIGIN = "https://raka.gunar.to"
+
+[[kv_namespaces]]
+binding = "REACTIONS"
+id = "c039324161f34255a2d780cc8c793a37"
+preview_id = "5b1db499635f4fdfb1ab9079ad7fbcf8"

@@ -25,6 +25,10 @@ layout: layouts/base.njk
 
 {{ content | safe }}
 
+<style>{% include "css/reactions.css" %}</style>
+<div id="reactions" data-slug="{{ page.url }}"></div>
+<script src="/js/reactions.js" defer></script>
+
 {%- if collections.posts %}
 {%- set previousPost = collections.posts | getPreviousCollectionItem %}
 {%- set nextPost = collections.posts | getNextCollectionItem %}
