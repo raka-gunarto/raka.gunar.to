@@ -5,11 +5,24 @@
   <subtitle>Out of band thinking</subtitle>
   <link href="https://raka.gunar.to/feed/feed.xml" rel="self" />
   <link href="https://raka.gunar.to/" />
-  <updated>2026-02-18T00:00:00Z</updated>
+  <updated>2026-02-26T00:00:00Z</updated>
   <id>https://raka.gunar.to/</id>
   <author>
     <name>Raka Gunarto</name>
   </author>
+  <entry>
+    <title>3000 commits behind origin/main in 6 days</title>
+    <link href="https://raka.gunar.to/blog/2026/02/26/death-of-my-craft/" />
+    <updated>2026-02-26T00:00:00Z</updated>
+    <id>https://raka.gunar.to/blog/2026/02/26/death-of-my-craft/</id>
+    <content type="html">&lt;html&gt;&lt;head&gt;&lt;/head&gt;&lt;body&gt;&lt;p&gt;I feel like I&#39;m watching the death of the craft that I&#39;ve admired and wanted to master since I was young.&lt;/p&gt;
+&lt;p&gt;A week ago I forked the popular project &quot;OpenClaw&quot; to add a sandboxing backend using &lt;code&gt;bwrap&lt;/code&gt; for my autonomous AI agent container hardening project. The fork is already 3000 commits behind. How is that rate of change sustainable? How does anyone understand what&#39;s going on in that codebase?&lt;/p&gt;
+&lt;p&gt;I&#39;m seeing linkedin posts asking if we are &quot;optimizing for humans&quot; by keeping PRs small with a screenshot of a 175 commits in a PR. I think small PRs force critical thinking on the author&#39;s part about what they are changing and why and force them to clearly encode their intent.&lt;/p&gt;
+&lt;p&gt;You may say this is probably how every software engineer felt when a new layer of abstraction (newer higher level languages) popped up every once in a while. I say this is not the same. Every previous abstraction raised the floor; you didn&#39;t need to hand-write assembly, but you still had to understand memory / data flow / failure modes / etc. The abstractions compressed the &lt;em&gt;how&lt;/em&gt;, not the &lt;em&gt;what&lt;/em&gt; or &lt;em&gt;why&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;Now people are prompting &quot;implement an auth system, make no mistakes&quot; and get a two thousand line diff to &quot;review&quot;. The person who built it probably can&#39;t tell you what happens when that token expires, or how they are protecting the token, or whatever invariants they were relying on.&lt;/p&gt;
+&lt;p&gt;Are we just accepting a future that it&#39;s fine to just &lt;em&gt;sort of kind of think we know&lt;/em&gt; how this software functions underneath?&lt;/p&gt;
+&lt;/body&gt;&lt;/html&gt;</content>
+  </entry>
   <entry>
     <title>I Built a Slop Factory and a Bot Wanted To Feature It</title>
     <link href="https://raka.gunar.to/blog/2026/02/18/slopinator-9000/" />

@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="en"><head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>Tagged 'linux'</title>
+		<title>3000 commits behind origin/main in 6 days</title>
 		<link rel="icon" href="/favicon.ico" type="image/x-icon">
 
 		<!-- Google tag (gtag.js) -->
@@ -457,6 +457,174 @@ hr::after {
 	content: ". . .";
 	display: block;
 	text-align: center;
+}
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+
+code[class*="language-"],
+pre[class*="language-"] {
+	color: #f8f8f2;
+	background: none;
+	text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+	font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+	font-size: 1em;
+	text-align: left;
+	white-space: pre;
+	word-spacing: normal;
+	word-break: normal;
+	word-wrap: normal;
+	line-height: 1.5;
+
+	-moz-tab-size: 4;
+	-o-tab-size: 4;
+	tab-size: 4;
+
+	-webkit-hyphens: none;
+	-moz-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+}
+
+/* Code blocks */
+pre[class*="language-"] {
+	padding: 1em;
+	margin: .5em 0;
+	overflow: auto;
+	border-radius: 0.3em;
+}
+
+:not(pre) > code[class*="language-"],
+pre[class*="language-"] {
+	background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*="language-"] {
+	padding: .1em;
+	border-radius: .3em;
+	white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+	color: #8292a2;
+}
+
+.token.punctuation {
+	color: #f8f8f2;
+}
+
+.token.namespace {
+	opacity: .7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+	color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+	color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+	color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+	color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+	color: #e6db74;
+}
+
+.token.keyword {
+	color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+	color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+	font-weight: bold;
+}
+.token.italic {
+	font-style: italic;
+}
+
+.token.entity {
+	cursor: help;
+}
+/*
+ * New diff- syntax
+ */
+
+pre[class*="language-diff-"] {
+	--eleventy-code-padding: 1.25em;
+	padding-left: var(--eleventy-code-padding);
+	padding-right: var(--eleventy-code-padding);
+}
+.token.deleted {
+	background-color: hsl(0, 51%, 37%);
+	color: inherit;
+}
+.token.inserted {
+	background-color: hsl(126, 31%, 39%);
+	color: inherit;
+}
+
+/* Make the + and - characters unselectable for copy/paste */
+.token.prefix.unchanged,
+.token.prefix.inserted,
+.token.prefix.deleted {
+	-webkit-user-select: none;
+	user-select: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.token.prefix.inserted,
+.token.prefix.deleted {
+	width: var(--eleventy-code-padding);
+	background-color: rgba(0,0,0,.2);
+}
+
+/* Optional: full-width background color */
+.token.inserted:not(.prefix),
+.token.deleted:not(.prefix) {
+	display: block;
+	margin-left: calc(-1 * var(--eleventy-code-padding));
+	margin-right: calc(-1 * var(--eleventy-code-padding));
+	text-decoration: none; /* override del, ins, mark defaults */
+	color: inherit; /* override del, ins, mark defaults */
 }</style>
 		
 		
@@ -488,19 +656,27 @@ hr::after {
 		<main id="main">
 			<heading-anchors>
 				
-<h1 id="tagged-linux">Tagged “linux”</h1>
 
 
-<ol reversed="" class="postlist" style="--postlist-index: 2">
-	<li class="postlist-item">
-		<a href="/blog/2025/12/24/secure-boot-pains/" class="postlist-link">Secure Boot Growing Pains</a>
-		<time class="postlist-date" datetime="2025-12-24">December 2025</time>
-	</li>
-</ol>
 
 
-<p>See <a href="/tags/">all tags</a>.</p>
 
+<h1 id="3000-commits-behind-origin-main-in-6-days">3000 commits behind origin/main in 6 days</h1>
+<p><em></em></p>
+
+<ul class="post-metadata">
+	<li><time datetime="2026-02-26">26 February 2026</time></li>
+</ul>
+
+<p>I feel like I'm watching the death of the craft that I've admired and wanted to master since I was young.</p>
+<p>A week ago I forked the popular project "OpenClaw" to add a sandboxing backend using <code>bwrap</code> for my autonomous AI agent container hardening project. The fork is already 3000 commits behind. How is that rate of change sustainable? How does anyone understand what's going on in that codebase?</p>
+<p>I'm seeing linkedin posts asking if we are "optimizing for humans" by keeping PRs small with a screenshot of a 175 commits in a PR. I think small PRs force critical thinking on the author's part about what they are changing and why and force them to clearly encode their intent.</p>
+<p>You may say this is probably how every software engineer felt when a new layer of abstraction (newer higher level languages) popped up every once in a while. I say this is not the same. Every previous abstraction raised the floor; you didn't need to hand-write assembly, but you still had to understand memory / data flow / failure modes / etc. The abstractions compressed the <em>how</em>, not the <em>what</em> or <em>why</em>.</p>
+<p>Now people are prompting "implement an auth system, make no mistakes" and get a two thousand line diff to "review". The person who built it probably can't tell you what happens when that token expires, or how they are protecting the token, or whatever invariants they were relying on.</p>
+<p>Are we just accepting a future that it's fine to just <em>sort of kind of think we know</em> how this software functions underneath?</p>
+
+<ul class="links-nextprev"><li class="links-nextprev-prev">← Previous<br> <a href="/blog/2026/02/18/slopinator-9000/">I Built a Slop Factory and a Bot Wanted To Feature It</a></li>
+</ul>
 
 			</heading-anchors>
 		</main>
@@ -513,7 +689,7 @@ hr::after {
 		</footer>
 		
 
-		<!-- This page `/tags/linux/` was built on 2026-02-26T10:17:26.440Z -->
+		<!-- This page `/blog/2026/02/26/death-of-my-craft/` was built on 2026-02-26T10:17:25.984Z -->
 		<script type="module" src="/dist/TyXGoSlcTl.js"></script>
 	
 
