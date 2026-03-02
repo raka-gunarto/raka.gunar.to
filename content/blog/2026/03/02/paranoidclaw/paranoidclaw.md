@@ -1,6 +1,6 @@
 ---
 title: How I Hardened My OpenClaw Deployment
-description: Declawing OpenClaw with cap-drop: ALL, mitmproxy and bubblewrap
+description: "Declawing OpenClaw with cap-drop: ALL, mitmproxy and bubblewrap"
 date: 2026-03-02
 tags: ["gen-AI","security","linux"]
 ---
