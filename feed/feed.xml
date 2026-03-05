@@ -5,11 +5,86 @@
   <subtitle>Out of band thinking</subtitle>
   <link href="https://raka.gunar.to/feed/feed.xml" rel="self" />
   <link href="https://raka.gunar.to/" />
-  <updated>2026-03-02T00:00:00Z</updated>
+  <updated>2026-03-05T00:00:00Z</updated>
   <id>https://raka.gunar.to/</id>
   <author>
     <name>Raka Gunarto</name>
   </author>
+  <entry>
+    <title>Code as a medium of thought</title>
+    <link href="https://raka.gunar.to/blog/2026/03/05/code-as-medium-of-thought/" />
+    <updated>2026-03-05T00:00:00Z</updated>
+    <id>https://raka.gunar.to/blog/2026/03/05/code-as-medium-of-thought/</id>
+    <content type="html">&lt;html&gt;&lt;head&gt;&lt;/head&gt;&lt;body&gt;&lt;p&gt;&lt;em&gt;This is a more coherent version of my earlier &lt;a href=&quot;https://raka.gunar.to/blog/2026/02/26/death-of-my-craft/&quot;&gt;thought dump&lt;/a&gt;.&lt;/em&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;Everyone keeps saying AI won&#39;t kill software engineering, just the boring parts. &quot;The craft survives&quot;.
+But I&#39;m not entirely convinced we know what the craft actually is.&lt;/p&gt;
+&lt;h3 id=&quot;code-is-how-you-think-not-just-the-product&quot;&gt;Code is how you think, not just the product&lt;/h3&gt;
+&lt;p&gt;I think code is a medium of thought for the software engineer. Before when we were are forced
+to write it by hand you hit friction: the abstraction that won&#39;t cooperate, the data structure
+that feels wrong, the &lt;em&gt;aha&lt;/em&gt; moment when you fix that bug. That learning is encoded and compounded
+into your intuition. The friction is where understanding forms.&lt;/p&gt;
+&lt;p&gt;I see many seasoned engineers use AI (LLM) code generation extremely well, because they amplify what
+is already there. But what about those starting out? Intuition around &quot;systems thinking&quot; didn&#39;t
+just appear out of thin air.&lt;/p&gt;
+&lt;h3 id=&quot;mathematicians-dont-lose-their-intuition-to-the-calculator&quot;&gt;Mathematicians don&#39;t lose their intuition to the calculator&lt;/h3&gt;
+&lt;p&gt;A mathematician who uses a calculator still feels when an answer is wrong. They can estimate
+and sense results that may be technically valid but non-obviously broken. That&#39;s intuition
+accumulated through years of working with numbers. The calculator didn&#39;t erode that because
+arithmetic was never really the foundation, the reasoning was.&lt;/p&gt;
+&lt;p&gt;The question I can&#39;t answer confidently is whether the same is true for software. Whether
+writing code and grinding through implementation is the foundation or the arithmetic
+underneath the whole thing. My current opinion is that it is an important formative part
+of software engineering. But I&#39;ve seen smart people argue otherwise and I can&#39;t
+fully refute them either. (Ignoring the headlines by AI companies to justify their
+token factories operating at a loss to investors.)&lt;/p&gt;
+&lt;h3 id=&quot;generating-the-answer-is-learning&quot;&gt;Generating the answer is learning&lt;/h3&gt;
+&lt;p&gt;&lt;a href=&quot;https://psycnet.apa.org/record/1980-20399-001&quot; class=&quot;external-link&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;There&#39;s research&lt;/a&gt; that makes me think the foundation is real and we&#39;re undermining it.
+Producing an answer yourself, rather than reading or copying it, seems to measurably
+improve how deeply it gets encoded into your brain. The struggle is not incidental to
+the learning, it &lt;em&gt;is&lt;/em&gt; the learning. When you skip straight to the output, you skip
+past that understanding.&lt;/p&gt;
+&lt;h3 id=&quot;too-early-and-the-foundation-never-forms&quot;&gt;Too early and the foundation never forms&lt;/h3&gt;
+&lt;p&gt;&lt;a href=&quot;https://news.vanderbilt.edu/2008/08/19/calculators-okay-in-math-class-if-students-know-the-facts-first-62879/&quot; class=&quot;external-link&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;Calculator studies in school&lt;/a&gt; have shown that student who haven&#39;t yet built the
+foundational reasoning and intuition around numbers and got access to calculators
+saw their performance durably worsen. The students who were already proficient were fine,
+the tool just amplified what existed.&lt;/p&gt;
+&lt;p&gt;The sequencing here is important, foundations first, then tools to apply those foundations
+faster later.&lt;/p&gt;
+&lt;h3 id=&quot;use-it-or-lose-it&quot;&gt;Use it or lose it&lt;/h3&gt;
+&lt;p&gt;Humans are inherently lazy, this is just evident. We will offload work to whatever reduces
+effort and we do it faster than we notice the atrophy. This is how cognition works.
+Skills you stop exercising degrade, and they degrade quietly in the background so
+you don&#39;t notice until you need them.&lt;/p&gt;
+&lt;p&gt;I think this is happening now with LLM code generation, especially to those who haven&#39;t
+been around long enough (including me) to build this deeply encoded intuition about
+software and systems. Sure you can review the output, but do we know what we&#39;re actually
+reviewing? People say test behaviours instead of reading the code, but how do you know
+what behaviours to test? Your high-level logic may be behaviourally correct, but
+architecturally a mess as well.&lt;/p&gt;
+&lt;p&gt;I do use LLMs, I love that it can generate boilerplate for me or write a bunch of tests
+that would have taken ages to type. Or implement entire features that I know how it should
+look. I try to put in the work to keep my understanding
+by still trying to understand the output and verifying my mental model against the LLM.
+But I know my level of curiosity and desire to understand isn&#39;t universally shared,
+and often feels like a burden to the velocity culture I see evolving around me.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Bonus: &lt;a href=&quot;https://www.coderabbit.ai/blog/state-of-ai-vs-human-code-generation-report&quot; class=&quot;external-link&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;CodeRabbit State of AI vs Human Code Gen&lt;/a&gt;&lt;/em&gt;&lt;/p&gt;
+&lt;h3 id=&quot;ai-write-this-comment-for-me&quot;&gt;&quot;AI, write this comment for me...&quot;&lt;/h3&gt;
+&lt;p&gt;My worry isn&#39;t just isolated to software engineering. It&#39;s human thinking as a whole.
+I&#39;ve seen comments online from people self proclaiming &quot;I had AI write this comment,
+AI raises the floor as it allows me to express my thoughts clearer and faster&quot;.&lt;/p&gt;
+&lt;p&gt;If you need AI to clearly articulate a thought, is that thought actually coherent in
+your own head? Clear writing is evidence of clear thinking. It&#39;s how you know the idea
+holds together. If you can&#39;t write the comment, do you really understand what you&#39;re
+saying? The tool is clumsily patching the gap in your thinking rather than assisting you.&lt;/p&gt;
+&lt;h3 id=&quot;now-what&quot;&gt;...now what?&lt;/h3&gt;
+&lt;p&gt;Perhaps I&#39;m wrong about all of this. Maybe the next generation of software engineers
+will develop intuition through entirely different means, through reading and critiquing
+AI generated code rather than starting from a blank file. What I do know now is that
+this experiment is being forced upon us either way, and we won&#39;t see the compounding
+effects until 5-10 more years. Until then, I hope we still keep using our brains.&lt;/p&gt;
+&lt;/body&gt;&lt;/html&gt;</content>
+  </entry>
   <entry>
     <title>Declawing my OpenClaw</title>
     <link href="https://raka.gunar.to/blog/2026/03/02/paranoidclaw/" />

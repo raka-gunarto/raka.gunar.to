@@ -1,13 +1,13 @@
 <!DOCTYPE html><html lang="en"><head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>3000 commits behind origin/main in 6 days</title>
+		<title>Code as a medium of thought</title>
 		<link rel="icon" href="/favicon.ico" type="image/x-icon">
 
 		<!-- Google tag (gtag.js) -->
 		<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-H9QR43SSJG"></script>
 		
-		<meta name="description" content="Out of band thinking">
+		<meta name="description" content="Friction">
 		<link rel="alternate" href="/feed/feed.xml" type="application/atom+xml" title="Dead Letters">
 		
 		
@@ -722,25 +722,88 @@ pre[class*="language-diff-"] {
 
 
 
-<h1 id="3000-commits-behind-origin-main-in-6-days">3000 commits behind origin/main in 6 days</h1>
-<p><em></em></p>
+<h1 id="code-as-a-medium-of-thought">Code as a medium of thought</h1>
+<p><em>Friction</em></p>
 
 <ul class="post-metadata">
-	<li><time datetime="2026-02-26">26 February 2026</time></li>
+	<li><time datetime="2026-03-05">05 March 2026</time></li>
+	<li><a href="/tags/opinion/" class="post-tag">opinion</a></li>
 </ul>
 
-<p>I feel like I'm watching the death of the craft that I've admired and wanted to master since I was young.</p>
-<p>A week ago I forked the popular project "OpenClaw" to add a sandboxing backend using <code>bwrap</code> for my autonomous AI agent container hardening project. The fork is already 3000 commits behind. How is that rate of change sustainable? How does anyone understand what's going on in that codebase?</p>
-<p>I'm seeing linkedin posts asking if we are "optimizing for humans" by keeping PRs small with a screenshot of a 175 commits in a PR. I think small PRs force critical thinking on the author's part about what they are changing and why and force them to clearly encode their intent.</p>
-<p>You may say this is probably how every software engineer felt when a new layer of abstraction (newer higher level languages) popped up every once in a while. I say this is not the same. Every previous abstraction raised the floor; you didn't need to hand-write assembly, but you still had to understand memory / data flow / failure modes / etc. The abstractions compressed the <em>how</em>, not the <em>what</em> or <em>why</em>.</p>
-<p>Now people are prompting "implement an auth system, make no mistakes" and get a two thousand line diff to "review". The person who built it probably can't tell you what happens when that token expires, or how they are protecting the token, or whatever invariants they were relying on.</p>
-<p>Are we just accepting a future that it's fine to just <em>sort of kind of think we know</em> how this software functions underneath?</p>
+<p><em>This is a more coherent version of my earlier <a href="/blog/2026/02/26/death-of-my-craft/">thought dump</a>.</em></p>
+<hr>
+<p>Everyone keeps saying AI won't kill software engineering, just the boring parts. "The craft survives".
+But I'm not entirely convinced we know what the craft actually is.</p>
+<h3 id="code-is-how-you-think-not-just-the-product">Code is how you think, not just the product</h3>
+<p>I think code is a medium of thought for the software engineer. Before when we were are forced
+to write it by hand you hit friction: the abstraction that won't cooperate, the data structure
+that feels wrong, the <em>aha</em> moment when you fix that bug. That learning is encoded and compounded
+into your intuition. The friction is where understanding forms.</p>
+<p>I see many seasoned engineers use AI (LLM) code generation extremely well, because they amplify what
+is already there. But what about those starting out? Intuition around "systems thinking" didn't
+just appear out of thin air.</p>
+<h3 id="mathematicians-dont-lose-their-intuition-to-the-calculator">Mathematicians don't lose their intuition to the calculator</h3>
+<p>A mathematician who uses a calculator still feels when an answer is wrong. They can estimate
+and sense results that may be technically valid but non-obviously broken. That's intuition
+accumulated through years of working with numbers. The calculator didn't erode that because
+arithmetic was never really the foundation, the reasoning was.</p>
+<p>The question I can't answer confidently is whether the same is true for software. Whether
+writing code and grinding through implementation is the foundation or the arithmetic
+underneath the whole thing. My current opinion is that it is an important formative part
+of software engineering. But I've seen smart people argue otherwise and I can't
+fully refute them either. (Ignoring the headlines by AI companies to justify their
+token factories operating at a loss to investors.)</p>
+<h3 id="generating-the-answer-is-learning">Generating the answer is learning</h3>
+<p><a href="https://psycnet.apa.org/record/1980-20399-001" class="external-link" target="_blank" rel="noopener noreferrer">There's research</a> that makes me think the foundation is real and we're undermining it.
+Producing an answer yourself, rather than reading or copying it, seems to measurably
+improve how deeply it gets encoded into your brain. The struggle is not incidental to
+the learning, it <em>is</em> the learning. When you skip straight to the output, you skip
+past that understanding.</p>
+<h3 id="too-early-and-the-foundation-never-forms">Too early and the foundation never forms</h3>
+<p><a href="https://news.vanderbilt.edu/2008/08/19/calculators-okay-in-math-class-if-students-know-the-facts-first-62879/" class="external-link" target="_blank" rel="noopener noreferrer">Calculator studies in school</a> have shown that student who haven't yet built the
+foundational reasoning and intuition around numbers and got access to calculators
+saw their performance durably worsen. The students who were already proficient were fine,
+the tool just amplified what existed.</p>
+<p>The sequencing here is important, foundations first, then tools to apply those foundations
+faster later.</p>
+<h3 id="use-it-or-lose-it">Use it or lose it</h3>
+<p>Humans are inherently lazy, this is just evident. We will offload work to whatever reduces
+effort and we do it faster than we notice the atrophy. This is how cognition works.
+Skills you stop exercising degrade, and they degrade quietly in the background so
+you don't notice until you need them.</p>
+<p>I think this is happening now with LLM code generation, especially to those who haven't
+been around long enough (including me) to build this deeply encoded intuition about
+software and systems. Sure you can review the output, but do we know what we're actually
+reviewing? People say test behaviours instead of reading the code, but how do you know
+what behaviours to test? Your high-level logic may be behaviourally correct, but
+architecturally a mess as well.</p>
+<p>I do use LLMs, I love that it can generate boilerplate for me or write a bunch of tests
+that would have taken ages to type. Or implement entire features that I know how it should
+look. I try to put in the work to keep my understanding
+by still trying to understand the output and verifying my mental model against the LLM.
+But I know my level of curiosity and desire to understand isn't universally shared,
+and often feels like a burden to the velocity culture I see evolving around me.</p>
+<p><em>Bonus: <a href="https://www.coderabbit.ai/blog/state-of-ai-vs-human-code-generation-report" class="external-link" target="_blank" rel="noopener noreferrer">CodeRabbit State of AI vs Human Code Gen</a></em></p>
+<h3 id="ai-write-this-comment-for-me">"AI, write this comment for me..."</h3>
+<p>My worry isn't just isolated to software engineering. It's human thinking as a whole.
+I've seen comments online from people self proclaiming "I had AI write this comment,
+AI raises the floor as it allows me to express my thoughts clearer and faster".</p>
+<p>If you need AI to clearly articulate a thought, is that thought actually coherent in
+your own head? Clear writing is evidence of clear thinking. It's how you know the idea
+holds together. If you can't write the comment, do you really understand what you're
+saying? The tool is clumsily patching the gap in your thinking rather than assisting you.</p>
+<h3 id="now-what">...now what?</h3>
+<p>Perhaps I'm wrong about all of this. Maybe the next generation of software engineers
+will develop intuition through entirely different means, through reading and critiquing
+AI generated code rather than starting from a blank file. What I do know now is that
+this experiment is being forced upon us either way, and we won't see the compounding
+effects until 5-10 more years. Until then, I hope we still keep using our brains.</p>
 
 
 
-<div id="reactions" data-slug="/blog/2026/02/26/death-of-my-craft/"></div>
+<div id="reactions" data-slug="/blog/2026/03/05/code-as-medium-of-thought/"></div>
 <script src="/js/reactions.js" defer=""></script>
-<ul class="links-nextprev"><li class="links-nextprev-prev">← Previous<br> <a href="/blog/2026/02/18/slopinator-9000/">I Built a Slop Factory and a Bot Wanted To Feature It</a></li><li class="links-nextprev-next">Next →<br><a href="/blog/2026/03/02/paranoidclaw/">Declawing my OpenClaw</a></li>
+<ul class="links-nextprev"><li class="links-nextprev-prev">← Previous<br> <a href="/blog/2026/03/02/paranoidclaw/">Declawing my OpenClaw</a></li>
 </ul>
 
 			</heading-anchors>
@@ -754,7 +817,7 @@ pre[class*="language-diff-"] {
 		</footer>
 		
 
-		<!-- This page `/blog/2026/02/26/death-of-my-craft/` was built on 2026-03-05T13:14:59.665Z -->
+		<!-- This page `/blog/2026/03/05/code-as-medium-of-thought/` was built on 2026-03-05T13:14:59.665Z -->
 		<script type="module" src="/dist/TyXGoSlcTl.js"></script>
 	
 
