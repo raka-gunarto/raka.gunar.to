@@ -1,0 +1,934 @@
+<!DOCTYPE html><html lang="en"><head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Reverse Engineering My Building's HVAC App</title>
+		<link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+		<!-- Google tag (gtag.js) -->
+		<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-H9QR43SSJG"></script>
+		
+		<meta name="description" content="I just want to control my heating.">
+		<link rel="alternate" href="/feed/feed.xml" type="application/atom+xml" title="Dead Letters">
+		
+		
+		
+		<style>/* This is an arbitrary CSS string added to the bundle */
+/* Defaults */
+:root {
+	--font-family: -apple-system, system-ui, sans-serif;
+	--font-family-monospace: Consolas, Menlo, Monaco, Andale Mono WT, Andale Mono, Lucida Console, Lucida Sans Typewriter, DejaVu Sans Mono, Bitstream Vera Sans Mono, Liberation Mono, Nimbus Mono L, Courier New, Courier, monospace;
+}
+
+/* Theme colors */
+:root {
+	--color-gray-20: #e0e0e0;
+	--color-gray-50: #C0C0C0;
+	--color-gray-90: #333;
+
+	--background-color: #fff;
+
+	--warn: #fff0b6;
+
+	--text-color: var(--color-gray-90);
+	--text-color-link: #fa8072;
+	--text-color-link-active: #e9967a;
+	--text-color-link-visited: #cd5c5c;
+
+	--syntax-tab-size: 2;
+}
+
+/* Dark theme colors */
+:root[data-theme="dark"] {
+	--color-gray-20: #e0e0e0;
+	--color-gray-50: #C0C0C0;
+	--color-gray-90: #dad8d8;
+
+	--warn: #a78912;
+
+	--text-color: var(--color-gray-90);
+	--text-color-link: #fa8072;
+	--text-color-link-active: #ffa07a;
+	--text-color-link-visited: #e9967a;
+
+	--background-color: #15202b;
+}
+
+/* Auto dark mode (when no manual preference is set) */
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme]) {
+		--color-gray-20: #e0e0e0;
+		--color-gray-50: #C0C0C0;
+		--color-gray-90: #dad8d8;
+
+		--warn: #a78912;
+
+		--text-color: var(--color-gray-90);
+		--text-color-link: #fa8072;
+		--text-color-link-active: #ffa07a;
+		--text-color-link-visited: #e9967a;
+
+		--background-color: #15202b;
+	}
+}
+
+
+/* Global stylesheet */
+* {
+	box-sizing: border-box;
+}
+
+@view-transition {
+	navigation: auto;
+}
+
+@keyframes slide-up {
+	from {
+		opacity: 0;
+		transform: translateY(50px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+header {
+	view-transition-name: header;
+}
+
+/* Prevent header movement. Hide old header immediately so it doesn't bleed through transparent background */
+::view-transition-group(header) {
+	animation: none;
+}
+
+::view-transition-old(header) {
+	display: none;
+}
+
+::view-transition-new(header) {
+	animation: none;
+	mix-blend-mode: normal;
+}
+
+footer {
+	view-transition-name: footer;
+}
+
+/* Prevent footer movement (sliding) */
+::view-transition-group(footer) {
+	animation: none;
+}
+
+::view-transition-new(root)
+{
+	animation: slide-up 0.3s ease forwards;
+}
+
+::view-transition-old(root)
+{
+	animation: slide-up 0.05s ease reverse forwards;
+}
+
+/* Fade in footer after content is done */
+::view-transition-new(footer)
+{
+	opacity: 0;
+	animation: fade-in 0.3s ease forwards;
+	animation-delay: 0.3s;
+}
+
+::view-transition-old(footer)
+{
+	display: none;
+}
+
+
+html,
+body {
+	padding: 0;
+	margin: 0 auto;
+	font-family: var(--font-family);
+	color: var(--text-color);
+	background-color: var(--background-color);
+}
+html {
+	overflow-y: scroll;
+}
+body {
+	max-width: 40em;
+}
+
+/* https://www.a11yproject.com/posts/how-to-hide-content/ */
+.visually-hidden:not(:focus):not(:active) {
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	height: 1px;
+	overflow: hidden;
+	position: absolute;
+	white-space: nowrap;
+	width: 1px;
+}
+
+/* Fluid images via https://www.zachleat.com/web/fluid-images/ */
+img{
+  max-width: 100%;
+}
+img[width][height] {
+  height: auto;
+}
+img[src$=".svg"] {
+  width: 100%;
+  height: auto;
+  max-width: none;
+}
+video,
+iframe {
+	width: 100%;
+	height: auto;
+}
+iframe {
+	aspect-ratio: 16/9;
+}
+
+p:last-child {
+	margin-bottom: 0;
+}
+p {
+	line-height: 1.5;
+}
+
+li {
+	line-height: 1.5;
+}
+
+a[href] {
+	color: var(--text-color-link);
+}
+a[href]:visited {
+	color: var(--text-color-link-visited);
+}
+a[href]:hover,
+a[href]:active {
+	color: var(--text-color-link-active);
+}
+
+main,
+footer {
+	padding: 1rem;
+}
+main :first-child {
+	margin-top: 0;
+}
+
+header {
+	border-bottom: 1px dashed var(--color-gray-20);
+}
+
+#skip-link {
+	text-decoration: none;
+	background: var(--background-color);
+	color: var(--text-color);
+	padding: 0.5rem 1rem;
+	border: 1px solid var(--color-gray-90);
+	border-radius: 2px;
+}
+
+/* Prevent visually-hidden skip link fom pushing content around when focused */
+#skip-link.visually-hidden:focus {
+	position: absolute;
+	top: 1rem;
+	left: 1rem;
+	/* Ensure it is positioned on top of everything else when it is shown */
+	z-index: 999;
+}
+
+.links-nextprev {
+	display: flex;
+	justify-content: space-between;
+	gap: .5em 1em;
+	list-style: "";
+	border-top: 1px dashed var(--color-gray-20);
+	padding: 1em 0;
+}
+.links-nextprev > * {
+	flex-grow: 1;
+}
+.links-nextprev-next {
+	text-align: right;
+}
+
+table {
+	margin: 1em 0;
+}
+table td,
+table th {
+	padding-right: 1em;
+}
+
+pre,
+code {
+	font-family: var(--font-family-monospace);
+}
+pre:not([class*="language-"]) {
+	margin: .5em 0;
+	line-height: 1.375; /* 22px /16 */
+	-moz-tab-size: var(--syntax-tab-size);
+	-o-tab-size: var(--syntax-tab-size);
+	tab-size: var(--syntax-tab-size);
+	-webkit-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+	direction: ltr;
+	text-align: left;
+	white-space: pre;
+	word-spacing: normal;
+	word-break: normal;
+	overflow-x: auto;
+}
+code {
+	word-break: break-all;
+}
+
+/* Header */
+header {
+	display: flex;
+	gap: 1em;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1em;
+}
+.home-link {
+	flex-grow: 1;
+	font-size: 1em; /* 16px /16 */
+	font-weight: 700;
+}
+.home-link:link:not(:hover) {
+	text-decoration: none;
+}
+
+/* Old post banner */
+.old-post-banner {
+	background-color: var(--warn);
+	color: var(--text-color);
+	border-radius: 4px;
+	padding: 1em;
+	margin-bottom: 1em;
+}
+
+/* Nav */
+.nav {
+	display: flex;
+	gap: .5em 1em;
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+.nav-item {
+	display: inline-block;
+}
+.nav-item a[href]:not(:hover) {
+	text-decoration: none;
+}
+.nav a[href][aria-current="page"] {
+	text-decoration: underline;
+}
+
+/* Theme toggle */
+.theme-toggle {
+	background: none;
+	border: 1px solid var(--color-gray-50);
+	border-radius: 4px;
+	color: var(--text-color);
+	cursor: pointer;
+	font-size: 0.8em;
+	padding: 0.25em 0.5em;
+	transition: all 0.2s ease;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 2.5em;
+}
+.theme-toggle:hover {
+	border-color: var(--text-color-link);
+	background-color: var(--color-gray-20);
+	opacity: 0.8;
+}
+.theme-toggle:focus {
+	outline: 2px solid var(--text-color-link);
+	outline-offset: 2px;
+}
+
+/* Posts list */
+.postlist {
+	counter-reset: start-from var(--postlist-index);
+	list-style: none;
+	padding: 0;
+	padding-left: 1.5rem;
+}
+.postlist-item {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	counter-increment: start-from -1;
+	margin-bottom: 1em;
+}
+.postlist-item:before {
+	display: inline-block;
+	pointer-events: none;
+	content: "" counter(start-from, decimal-leading-zero) ". ";
+	line-height: 100%;
+	text-align: right;
+	margin-left: -1.5rem;
+}
+.postlist-date,
+.postlist-item:before {
+	font-size: 0.8125em; /* 13px /16 */
+	color: var(--color-gray-90);
+}
+.postlist-date {
+	word-spacing: -0.5px;
+}
+.postlist-link {
+	font-size: 1.1875em; /* 19px /16 */
+	font-weight: 700;
+	flex-basis: calc(100% - 1.5rem);
+	padding-left: .25em;
+	padding-right: .5em;
+	text-underline-position: from-font;
+	text-underline-offset: 0;
+	text-decoration-thickness: 1px;
+}
+.postlist-item-active .postlist-link {
+	font-weight: bold;
+}
+
+/* Tags */
+.post-tag {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	text-transform: capitalize;
+	font-style: italic;
+}
+.postlist-item > .post-tag {
+	align-self: center;
+}
+
+/* Tags list */
+.post-metadata {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: .5em;
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+.post-metadata time {
+	margin-right: 1em;
+}
+
+
+/* External Link Indicator */
+.external-link::after {
+content: "↗";
+padding-left: 0.2em;
+font-size: 0.8em;
+opacity: 0.7;
+display: inline-block;
+text-decoration: none;
+}
+
+/* Stylize hr */
+hr {
+	border: none;
+}
+
+hr::after {
+	content: ". . .";
+	display: block;
+	text-align: center;
+}
+/**
+ * okaidia theme for JavaScript, CSS and HTML
+ * Loosely based on Monokai textmate theme by http://www.monokai.nl/
+ * @author ocodia
+ */
+
+code[class*="language-"],
+pre[class*="language-"] {
+	color: #f8f8f2;
+	background: none;
+	text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+	font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+	font-size: 1em;
+	text-align: left;
+	white-space: pre;
+	word-spacing: normal;
+	word-break: normal;
+	word-wrap: normal;
+	line-height: 1.5;
+
+	-moz-tab-size: 4;
+	-o-tab-size: 4;
+	tab-size: 4;
+
+	-webkit-hyphens: none;
+	-moz-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+}
+
+/* Code blocks */
+pre[class*="language-"] {
+	padding: 1em;
+	margin: .5em 0;
+	overflow: auto;
+	border-radius: 0.3em;
+}
+
+:not(pre) > code[class*="language-"],
+pre[class*="language-"] {
+	background: #272822;
+}
+
+/* Inline code */
+:not(pre) > code[class*="language-"] {
+	padding: .1em;
+	border-radius: .3em;
+	white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+	color: #8292a2;
+}
+
+.token.punctuation {
+	color: #f8f8f2;
+}
+
+.token.namespace {
+	opacity: .7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+	color: #f92672;
+}
+
+.token.boolean,
+.token.number {
+	color: #ae81ff;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+	color: #a6e22e;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+	color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+	color: #e6db74;
+}
+
+.token.keyword {
+	color: #66d9ef;
+}
+
+.token.regex,
+.token.important {
+	color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+	font-weight: bold;
+}
+.token.italic {
+	font-style: italic;
+}
+
+.token.entity {
+	cursor: help;
+}
+/*
+ * New diff- syntax
+ */
+
+pre[class*="language-diff-"] {
+	--eleventy-code-padding: 1.25em;
+	padding-left: var(--eleventy-code-padding);
+	padding-right: var(--eleventy-code-padding);
+}
+.token.deleted {
+	background-color: hsl(0, 51%, 37%);
+	color: inherit;
+}
+.token.inserted {
+	background-color: hsl(126, 31%, 39%);
+	color: inherit;
+}
+
+/* Make the + and - characters unselectable for copy/paste */
+.token.prefix.unchanged,
+.token.prefix.inserted,
+.token.prefix.deleted {
+	-webkit-user-select: none;
+	user-select: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.token.prefix.inserted,
+.token.prefix.deleted {
+	width: var(--eleventy-code-padding);
+	background-color: rgba(0,0,0,.2);
+}
+
+/* Optional: full-width background color */
+.token.inserted:not(.prefix),
+.token.deleted:not(.prefix) {
+	display: block;
+	margin-left: calc(-1 * var(--eleventy-code-padding));
+	margin-right: calc(-1 * var(--eleventy-code-padding));
+	text-decoration: none; /* override del, ins, mark defaults */
+	color: inherit; /* override del, ins, mark defaults */
+}
+/* ---- Reactions widget ---- */
+
+#reactions {
+	margin-top: 2.5em;
+	margin-bottom: 1.5em;
+	text-align: center;
+}
+
+.reactions-heading {
+	font-size: 0.95em;
+	color: var(--color-gray-50);
+	margin-bottom: 0.6em;
+}
+
+.reactions-row {
+	display: flex;
+	justify-content: center;
+	gap: 0.5em;
+	flex-wrap: wrap;
+}
+
+.reaction-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3em;
+	padding: 0.4em 0.7em;
+	border: 2px solid var(--color-gray-20);
+	border-radius: 9999px;
+	background: transparent;
+	cursor: pointer;
+	font-size: 1.15em;
+	color: var(--text-color);
+	transition: border-color 0.15s, background-color 0.15s, transform 0.1s;
+	user-select: none;
+	line-height: 1;
+}
+
+.reaction-btn:hover {
+	border-color: var(--text-color-link);
+	background: rgba(250, 128, 114, 0.08);
+}
+
+.reaction-btn:active {
+	transform: scale(0.93);
+}
+
+.reaction-btn.active {
+	border-color: var(--text-color-link);
+	background: rgba(250, 128, 114, 0.15);
+}
+
+.reaction-emoji {
+	font-size: 1.2em;
+	line-height: 1;
+}
+
+.reaction-count {
+	font-size: 0.85em;
+	min-width: 0.8em;
+	font-variant-numeric: tabular-nums;
+}</style>
+		
+		
+		
+		
+	</head>
+	<body>
+		<a href="#main" id="skip-link" class="visually-hidden">Skip to main content</a>
+
+		<header>
+			<a href="/" class="home-link">Dead Letters</a>
+			<nav>
+				<h2 class="visually-hidden" id="top-level-navigation-menu">Top level navigation menu</h2>
+				<ul class="nav">
+					<li class="nav-item"><a href="/">Home</a></li>
+					<li class="nav-item"><a href="/blog/">Archive</a></li>
+					<li class="nav-item"><a href="/about/">About</a></li>
+					<li class="nav-item"><a href="/cv/">CV</a></li>
+					<li class="nav-item"><a href="/feed/feed.xml">Feed</a></li>
+					<li class="nav-item">
+						<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+							<span class="theme-toggle-icon">🌙</span>
+						</button>
+					</li>
+				</ul>
+			</nav>
+		</header>
+
+		<main id="main">
+			<heading-anchors>
+				
+
+
+
+
+
+<h1 id="reverse-engineering-my-buildings-hvac-app">Reverse Engineering My Building's HVAC App</h1>
+<p><em>I just want to control my heating.</em></p>
+
+<ul class="post-metadata">
+	<li><time datetime="2026-04-25">25 April 2026</time></li>
+	<li><a href="/tags/reverse-engineering/" class="post-tag">reverse-engineering</a>, </li>
+	<li><a href="/tags/home-automation/" class="post-tag">home-automation</a></li>
+</ul>
+
+<p>I just recently moved into a new flat. It's a great flat overall, but what's not
+so great is the heating/cooling system.</p>
+<p>It is a "smart" system, and I don't get a thermostat on the wall, rather a buggy
+app. The app is for Android 4, so I can't even install it on my phone. The flat
+generously comes with an Android tablet that has the app installed, which
+"works" but crashes half the time, is very slow, and you just get vague + -
+buttons relative to <em>something</em> without a display of the actual numeric
+setpoint.</p>
+<p>This was unacceptable, so I decided to reverse engineer it (with some help from
+my good friend Sonnet 4.6).</p>
+<h3 id="what-are-we-dealing-with">What are we dealing with?</h3>
+<p>The app is <code>Titan Remote Access</code> for a "NetMaster BMS" controller. BMS stands
+for Building Management System, a box on the wall that controls the fan coil
+units in each room. Mine has two FCU (Fan Coil Unit) devices, one per room.</p>
+<p>First step was to pull it apart with <a href="https://github.com/skylot/jadx" class="external-link" target="_blank" rel="noopener noreferrer">jadx</a>, a
+Java decompiler for Android DEX bytecode:</p>
+<pre class="language-bash" tabindex="0"><code class="language-bash">jadx --show-bad-code <span class="token parameter variable">-d</span> decompiled/ <span class="token string">"Titan Remote Access_1.3.1.apk"</span></code></pre>
+<p>This gives you a reasonably readable Java source tree. A lot of it is obfuscated
+(<code>a.java</code>, <code>b.java</code>, etc) but the important activity classes like
+<code>ZoneViewActivity.java</code> survived intact enough to trace.</p>
+<h3 id="the-remote-transport">The remote transport</h3>
+<p>Frustratingly, the device is not on LAN. This explains why the LAN port is
+connected to is set to bridge mode on the router. I assume it probably has its
+own credentials to authenticate with the ISP and connects to an Azure Service
+Bus to poll for incoming control messages and posts responses back. The app also
+connects to this service to talk to the controller.</p>
+<p>(Also as it turns out, the app itself is not slow, the controller just takes a
+really long time to post responses back to the message bus)</p>
+<p>The addressing (namespace, topic, subscription) is derived entirely from the
+NMID (NetMaster ID?), an 8-character hex ID printed on the controller label.
+Buried in the decompiled code is a formula that maps the NMID to a set of
+integers:</p>
+<pre class="language-python" tabindex="0"><code class="language-python"><span class="token keyword">def</span> <span class="token function">derive_namespace</span><span class="token punctuation">(</span>nmid<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    val     <span class="token operator">=</span> <span class="token builtin">int</span><span class="token punctuation">(</span>nmid<span class="token punctuation">,</span> <span class="token number">16</span><span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">672559477</span>
+    rounded <span class="token operator">=</span> <span class="token builtin">round</span><span class="token punctuation">(</span><span class="token punctuation">(</span>val <span class="token operator">/</span> <span class="token number">2.449150704e9</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">1.59999999e8</span><span class="token punctuation">)</span>
+    namespace  <span class="token operator">=</span> rounded <span class="token operator">//</span> <span class="token number">10000000</span>
+    topic_num  <span class="token operator">=</span> <span class="token punctuation">(</span>rounded <span class="token operator">%</span> <span class="token number">10000000</span><span class="token punctuation">)</span> <span class="token operator">//</span> <span class="token number">1000</span>
+    client_id  <span class="token operator">=</span> rounded <span class="token operator">%</span> <span class="token number">1000</span>
+    <span class="token keyword">return</span> namespace<span class="token punctuation">,</span> topic_num<span class="token punctuation">,</span> client_id</code></pre>
+<p>From there the Service Bus addresses fall out:</p>
+<pre><code>tpnmra{namespace}.servicebus.windows.net
+topic:        NMT{topic_num:04X}
+subscription: F{client_id:03X}
+</code></pre>
+<h3 id="getting-a-token">Getting a token</h3>
+<p>Service Bus needs a SAS (Shared Access Signature) token. The app fetches one
+from <code>rarec.azurewebsites.net</code></p>
+<p>The request authenticates itself with an HMAC-SHA256 of the current Unix
+timestamp, keyed on a hardcoded secret (<code>TP-DReco1</code>) I found in the source.</p>
+<p>The flow looks something like this:</p>
+<pre class="language-python" tabindex="0"><code class="language-python"><span class="token keyword">def</span> <span class="token function">_rarec_auth_header</span><span class="token punctuation">(</span>timestamp<span class="token punctuation">:</span> <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&gt;</span> <span class="token builtin">str</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""
+    Build the Authorization header for the rarec token endpoint.
+    """</span>
+    key <span class="token operator">=</span> base64<span class="token punctuation">.</span>b64encode<span class="token punctuation">(</span><span class="token string">b"TP-DReco1"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>decode<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    mac <span class="token operator">=</span> hmac<span class="token punctuation">.</span>new<span class="token punctuation">(</span>key<span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token builtin">str</span><span class="token punctuation">(</span>timestamp<span class="token punctuation">)</span><span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> hashlib<span class="token punctuation">.</span>sha256<span class="token punctuation">)</span>
+    sig <span class="token operator">=</span> base64<span class="token punctuation">.</span>b64encode<span class="token punctuation">(</span>mac<span class="token punctuation">.</span>digest<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>decode<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token string-interpolation"><span class="token string">f"RecoveryToken </span><span class="token interpolation"><span class="token punctuation">{</span>sig<span class="token punctuation">}</span></span><span class="token string">"</span></span>
+
+
+<span class="token keyword">def</span> <span class="token function">get_sas_token</span><span class="token punctuation">(</span>nmid<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">,</span> http_timeout<span class="token punctuation">:</span> <span class="token builtin">float</span> <span class="token operator">=</span> <span class="token number">15.0</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&gt;</span> <span class="token builtin">dict</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""
+    POST to rarec to get a SAS token for the given NMID.
+    Returns: {"Tok": "...", "Exp": unix_timestamp}  (Exp = current_time + 3300)
+    """</span>
+    nmid <span class="token operator">=</span> nmid<span class="token punctuation">.</span>upper<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    namespace<span class="token punctuation">,</span> topic_num<span class="token punctuation">,</span> _ <span class="token operator">=</span> derive_namespace<span class="token punctuation">(</span>nmid<span class="token punctuation">)</span>
+    topic <span class="token operator">=</span> sb_topic<span class="token punctuation">(</span>topic_num<span class="token punctuation">)</span>
+    ts <span class="token operator">=</span> <span class="token builtin">int</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>time<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    body <span class="token operator">=</span> json<span class="token punctuation">.</span>dumps<span class="token punctuation">(</span><span class="token punctuation">{</span>
+        <span class="token string">"NS"</span><span class="token punctuation">:</span>  namespace<span class="token punctuation">,</span>
+        <span class="token string">"Top"</span><span class="token punctuation">:</span> topic<span class="token punctuation">,</span>
+        <span class="token string">"Exp"</span><span class="token punctuation">:</span> ts<span class="token punctuation">,</span> <span class="token comment"># current time – matches Java: tokenRequest.TokenExpiration = currentTimeMillis</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    headers <span class="token operator">=</span> <span class="token punctuation">{</span>
+        <span class="token string">"Content-Type"</span><span class="token punctuation">:</span>  <span class="token string">"application/json"</span><span class="token punctuation">,</span>
+        <span class="token string">"Authorization"</span><span class="token punctuation">:</span> _rarec_auth_header<span class="token punctuation">(</span>ts<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    resp <span class="token operator">=</span> requests<span class="token punctuation">.</span>post<span class="token punctuation">(</span>RAREC_URL<span class="token punctuation">,</span> headers<span class="token operator">=</span>headers<span class="token punctuation">,</span> data<span class="token operator">=</span>body<span class="token punctuation">,</span> timeout<span class="token operator">=</span>http_timeout<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> resp<span class="token punctuation">.</span>json<span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
+<p>The token comes back with an expiry so you'll have to fetch a new token manually
+every one in a while.</p>
+<h3 id="the-encryption">The encryption</h3>
+<p>Every message body (from both app and controller) is AES-128-CBC encrypted. The
+key is derived with PBKDF2-HMAC-SHA1 (1000 iterations) from a session key that
+combines the password with the addressing integers:</p>
+<pre class="language-python" tabindex="0"><code class="language-python"><span class="token keyword">def</span> <span class="token function">session_key</span><span class="token punctuation">(</span>password<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">,</span> nmid<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&gt;</span> <span class="token builtin">str</span><span class="token punctuation">:</span>
+    _<span class="token punctuation">,</span> topic_num<span class="token punctuation">,</span> client_id <span class="token operator">=</span> derive_namespace<span class="token punctuation">(</span>nmid<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token string-interpolation"><span class="token string">f"</span><span class="token interpolation"><span class="token punctuation">{</span>password<span class="token punctuation">}</span></span><span class="token interpolation"><span class="token punctuation">{</span>client_id<span class="token punctuation">:</span><span class="token format-spec">03X</span><span class="token punctuation">}</span></span><span class="token interpolation"><span class="token punctuation">{</span>topic_num<span class="token punctuation">:</span><span class="token format-spec">04X</span><span class="token punctuation">}</span></span><span class="token string">"</span></span></code></pre>
+<p>The encrypted bundle packs the salt and IV at fixed offsets from the <em>end</em>:</p>
+<pre><code>ciphertext || salt(16 bytes) || padding(6 bytes) || iv(16 bytes)
+</code></pre>
+<p>So to decrypt you slice off the last 16 bytes for the IV, the 16 bytes before
+the padding for the salt, and everything else is ciphertext.</p>
+<h3 id="the-packet-structure">The packet structure</h3>
+<p>Inside the encrypted envelope is a binary framing with sections and items:</p>
+<pre><code>[total_len : 2 bytes LE][seq_num : 1 byte][sections...]
+</code></pre>
+<p>Each section has a service type (authenticate, read/write access, zone init,
+...) and carries a list of items. Each item is a data type byte, a 2-byte
+length, and a UTF-8 JSON string. The actual commands are BACnet (Building
+Automation and Control networks communication protocol, an ISO standard
+apparently) read/write requests serialised as JSON and packed inside this binary
+envelope, which is then encrypted and POSTed to Service Bus.</p>
+<p>Essentially it's a REST API wrapped in a binary protocol wrapped in CBC
+encryption.</p>
+<h3 id="finding-the-right-objects-to-read">Finding the right objects to read</h3>
+<p>Once the transport was working I could authenticate and start poking at BACnet
+objects. My first assumption was that temperature lived in <code>AV1</code> (Analog Value
+1). When it returned 0 I was clearly wrong (lol).</p>
+<p>After tracing through the decompiled class that hydrates zone objects from the
+device's initialization response, I found how the app maps BACnet objects to
+zone fields:</p>
+<pre class="language-java" tabindex="0"><code class="language-java">hVar<span class="token punctuation">.</span>f5451r <span class="token operator">=</span> linkedHashMap2<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token class-name">String</span><span class="token punctuation">.</span><span class="token function">format</span><span class="token punctuation">(</span><span class="token string">"AV10%d01"</span><span class="token punctuation">,</span> zone<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// room temp</span>
+hVar<span class="token punctuation">.</span>f5446l <span class="token operator">=</span> linkedHashMap2<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token class-name">String</span><span class="token punctuation">.</span><span class="token function">format</span><span class="token punctuation">(</span><span class="token string">"AV10%d02"</span><span class="token punctuation">,</span> zone<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// ambient temp</span>
+hVar<span class="token punctuation">.</span>f5447m <span class="token operator">=</span> linkedHashMap2<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token class-name">String</span><span class="token punctuation">.</span><span class="token function">format</span><span class="token punctuation">(</span><span class="token string">"AV10%d03"</span><span class="token punctuation">,</span> zone<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// setpoint  ← this one</span>
+hVar<span class="token punctuation">.</span>f5445k <span class="token operator">=</span> linkedHashMap2<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token class-name">String</span><span class="token punctuation">.</span><span class="token function">format</span><span class="token punctuation">(</span><span class="token string">"MSV10%d01"</span><span class="token punctuation">,</span> zone<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// fan / zone power</span></code></pre>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Zone 1</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AV10{zone}01</code></td>
+<td><code>AV10101</code></td>
+<td>Room temperature (°C, read-only)</td>
+</tr>
+<tr>
+<td><code>AV10{zone}03</code></td>
+<td><code>AV10103</code></td>
+<td>Setpoint (°C, read/write)</td>
+</tr>
+<tr>
+<td><code>MSV308</code></td>
+<td>—</td>
+<td>HVAC mode (device-level)</td>
+</tr>
+<tr>
+<td><code>MSV10{zone}01</code></td>
+<td><code>MSV10101</code></td>
+<td>Fan speed + zone power</td>
+</tr>
+</tbody>
+</table>
+<p>The fan/power object doubles as both the on/off switch and the speed setting —
+there's no separate object for on/off on this device type. State 1 is on/auto, 2
+is boost, 3 is off.</p>
+<h3 id="talking-to-it">Talking to it</h3>
+<p>Putting it all together, authentication is a single Service Bus round-trip: POST
+an encrypted packet containing your NMID, receive back a JSON payload listing
+all zone devices and their BACnet instance numbers.</p>
+<pre class="language-python" tabindex="0"><code class="language-python">client <span class="token operator">=</span> NetMasterRemote<span class="token punctuation">(</span>nmid<span class="token operator">=</span><span class="token string">"mynmid"</span><span class="token punctuation">,</span> password<span class="token operator">=</span><span class="token string">"mypassword"</span><span class="token punctuation">)</span>
+auth <span class="token operator">=</span> client<span class="token punctuation">.</span>authenticate<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token comment"># {'ZoneList': [{'DevID': 20651, 'Name': 'Living Room', ...}, ...]}</span></code></pre>
+<p>From there reading/writing a value encrypts a BACnet read/write request, POSTs
+it to Service Bus, polls the subscription for the response, decrypts it, and
+unpacks the value. After making nice wrappers for constructing the data packets
+and receiving the values back from Azure Service Bus, it was a breeze:</p>
+<pre class="language-python" tabindex="0"><code class="language-python"><span class="token comment"># Room temperature and setpoint</span>
+temp    <span class="token operator">=</span> client<span class="token punctuation">.</span>bacread<span class="token punctuation">(</span><span class="token number">20651</span><span class="token punctuation">,</span> <span class="token string">"AV10101"</span><span class="token punctuation">)</span>   <span class="token comment"># → 23.4</span>
+setpoint <span class="token operator">=</span> client<span class="token punctuation">.</span>bacread<span class="token punctuation">(</span><span class="token number">20651</span><span class="token punctuation">,</span> <span class="token string">"AV10103"</span><span class="token punctuation">)</span>  <span class="token comment"># → 21.0</span></code></pre>
+<pre class="language-python" tabindex="0"><code class="language-python">client<span class="token punctuation">.</span>bacwrite<span class="token punctuation">(</span><span class="token number">20651</span><span class="token punctuation">,</span> <span class="token string">"AV10103"</span><span class="token punctuation">,</span> <span class="token number">22.0</span><span class="token punctuation">)</span>  <span class="token comment"># set temperature</span>
+client<span class="token punctuation">.</span>bacwrite<span class="token punctuation">(</span><span class="token number">20651</span><span class="token punctuation">,</span> <span class="token string">"MSV10101"</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>    <span class="token comment"># fan boost</span>
+client<span class="token punctuation">.</span>bacwrite<span class="token punctuation">(</span><span class="token number">20651</span><span class="token punctuation">,</span> <span class="token string">"MSV10101"</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">)</span>    <span class="token comment"># turn zone off</span></code></pre>
+<h3 id="is-it-working">Is it working?</h3>
+<p>Yes. Both FCUs respond to commands and the status reads look correct. But boy
+was it a pain. I'd rather just have a thermostat with a dial on the wall or
+something.</p>
+<p>But in the end, I ended up writing a nice Home Assistant integration that lets me
+read out the temperature sensors in each room and set the temperature. That
+tablet can just stay in the closet and I can now automate my heating and cooling :)</p>
+
+
+
+<div id="reactions" data-slug="/blog/2026/04/25/reverse-engineering-hvac/"></div>
+<script src="/js/reactions.js" defer=""></script>
+<ul class="links-nextprev"><li class="links-nextprev-prev">← Previous<br> <a href="/blog/2026/03/05/code-as-medium-of-thought/">Code as a medium of thought</a></li>
+</ul>
+
+			</heading-anchors>
+		</main>
+
+		
+		<footer>
+			<p>
+				<em><a href="/about">Raka Gunarto</a>'s Personal Blog. Any views expressed here are my own and mine alone.</em>
+			</p>
+		</footer>
+		
+
+		<!-- This page `/blog/2026/04/25/reverse-engineering-hvac/` was built on 2026-04-25T23:21:10.857Z -->
+		<script type="module" src="/dist/TyXGoSlcTl.js"></script>
+	
+
+</body></html>

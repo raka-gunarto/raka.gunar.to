@@ -5,11 +5,195 @@
   <subtitle>Out of band thinking</subtitle>
   <link href="https://raka.gunar.to/feed/feed.xml" rel="self" />
   <link href="https://raka.gunar.to/" />
-  <updated>2026-03-05T00:00:00Z</updated>
+  <updated>2026-04-25T00:00:00Z</updated>
   <id>https://raka.gunar.to/</id>
   <author>
     <name>Raka Gunarto</name>
   </author>
+  <entry>
+    <title>Reverse Engineering My Building&#39;s HVAC App</title>
+    <link href="https://raka.gunar.to/blog/2026/04/25/reverse-engineering-hvac/" />
+    <updated>2026-04-25T00:00:00Z</updated>
+    <id>https://raka.gunar.to/blog/2026/04/25/reverse-engineering-hvac/</id>
+    <content type="html">&lt;html&gt;&lt;head&gt;&lt;/head&gt;&lt;body&gt;&lt;p&gt;I just recently moved into a new flat. It&#39;s a great flat overall, but what&#39;s not
+so great is the heating/cooling system.&lt;/p&gt;
+&lt;p&gt;It is a &quot;smart&quot; system, and I don&#39;t get a thermostat on the wall, rather a buggy
+app. The app is for Android 4, so I can&#39;t even install it on my phone. The flat
+generously comes with an Android tablet that has the app installed, which
+&quot;works&quot; but crashes half the time, is very slow, and you just get vague + -
+buttons relative to &lt;em&gt;something&lt;/em&gt; without a display of the actual numeric
+setpoint.&lt;/p&gt;
+&lt;p&gt;This was unacceptable, so I decided to reverse engineer it (with some help from
+my good friend Sonnet 4.6).&lt;/p&gt;
+&lt;h3 id=&quot;what-are-we-dealing-with&quot;&gt;What are we dealing with?&lt;/h3&gt;
+&lt;p&gt;The app is &lt;code&gt;Titan Remote Access&lt;/code&gt; for a &quot;NetMaster BMS&quot; controller. BMS stands
+for Building Management System, a box on the wall that controls the fan coil
+units in each room. Mine has two FCU (Fan Coil Unit) devices, one per room.&lt;/p&gt;
+&lt;p&gt;First step was to pull it apart with &lt;a href=&quot;https://github.com/skylot/jadx&quot; class=&quot;external-link&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;jadx&lt;/a&gt;, a
+Java decompiler for Android DEX bytecode:&lt;/p&gt;
+&lt;pre class=&quot;language-bash&quot; tabindex=&quot;0&quot;&gt;&lt;code class=&quot;language-bash&quot;&gt;jadx --show-bad-code &lt;span class=&quot;token parameter variable&quot;&gt;-d&lt;/span&gt; decompiled/ &lt;span class=&quot;token string&quot;&gt;&quot;Titan Remote Access_1.3.1.apk&quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This gives you a reasonably readable Java source tree. A lot of it is obfuscated
+(&lt;code&gt;a.java&lt;/code&gt;, &lt;code&gt;b.java&lt;/code&gt;, etc) but the important activity classes like
+&lt;code&gt;ZoneViewActivity.java&lt;/code&gt; survived intact enough to trace.&lt;/p&gt;
+&lt;h3 id=&quot;the-remote-transport&quot;&gt;The remote transport&lt;/h3&gt;
+&lt;p&gt;Frustratingly, the device is not on LAN. This explains why the LAN port is
+connected to is set to bridge mode on the router. I assume it probably has its
+own credentials to authenticate with the ISP and connects to an Azure Service
+Bus to poll for incoming control messages and posts responses back. The app also
+connects to this service to talk to the controller.&lt;/p&gt;
+&lt;p&gt;(Also as it turns out, the app itself is not slow, the controller just takes a
+really long time to post responses back to the message bus)&lt;/p&gt;
+&lt;p&gt;The addressing (namespace, topic, subscription) is derived entirely from the
+NMID (NetMaster ID?), an 8-character hex ID printed on the controller label.
+Buried in the decompiled code is a formula that maps the NMID to a set of
+integers:&lt;/p&gt;
+&lt;pre class=&quot;language-python&quot; tabindex=&quot;0&quot;&gt;&lt;code class=&quot;language-python&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;token function&quot;&gt;derive_namespace&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;nmid&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token builtin&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+    val     &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token builtin&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;nmid&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;16&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;672559477&lt;/span&gt;
+    rounded &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token builtin&quot;&gt;round&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;val &lt;span class=&quot;token operator&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;2.449150704e9&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;1.59999999e8&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+    namespace  &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; rounded &lt;span class=&quot;token operator&quot;&gt;//&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;10000000&lt;/span&gt;
+    topic_num  &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;rounded &lt;span class=&quot;token operator&quot;&gt;%&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;10000000&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;//&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;1000&lt;/span&gt;
+    client_id  &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; rounded &lt;span class=&quot;token operator&quot;&gt;%&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;1000&lt;/span&gt;
+    &lt;span class=&quot;token keyword&quot;&gt;return&lt;/span&gt; namespace&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; topic_num&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; client_id&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;From there the Service Bus addresses fall out:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;tpnmra{namespace}.servicebus.windows.net
+topic:        NMT{topic_num:04X}
+subscription: F{client_id:03X}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&quot;getting-a-token&quot;&gt;Getting a token&lt;/h3&gt;
+&lt;p&gt;Service Bus needs a SAS (Shared Access Signature) token. The app fetches one
+from &lt;code&gt;rarec.azurewebsites.net&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;The request authenticates itself with an HMAC-SHA256 of the current Unix
+timestamp, keyed on a hardcoded secret (&lt;code&gt;TP-DReco1&lt;/code&gt;) I found in the source.&lt;/p&gt;
+&lt;p&gt;The flow looks something like this:&lt;/p&gt;
+&lt;pre class=&quot;language-python&quot; tabindex=&quot;0&quot;&gt;&lt;code class=&quot;language-python&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;token function&quot;&gt;_rarec_auth_header&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;timestamp&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token builtin&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;token builtin&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;token triple-quoted-string string&quot;&gt;&quot;&quot;&quot;
+    Build the Authorization header for the rarec token endpoint.
+    &quot;&quot;&quot;&lt;/span&gt;
+    key &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; base64&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;b64encode&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;b&quot;TP-DReco1&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;decode&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+    mac &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; hmac&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;new&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;key&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;encode&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token builtin&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;timestamp&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;encode&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; hashlib&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;sha256&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+    sig &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; base64&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;b64encode&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;mac&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;digest&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;decode&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;token keyword&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;token string-interpolation&quot;&gt;&lt;span class=&quot;token string&quot;&gt;f&quot;RecoveryToken &lt;/span&gt;&lt;span class=&quot;token interpolation&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;sig&lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;&lt;/span&gt;&lt;/span&gt;
+
+
+&lt;span class=&quot;token keyword&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;token function&quot;&gt;get_sas_token&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;nmid&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token builtin&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; http_timeout&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token builtin&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;15.0&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;token builtin&quot;&gt;dict&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;token triple-quoted-string string&quot;&gt;&quot;&quot;&quot;
+    POST to rarec to get a SAS token for the given NMID.
+    Returns: {&quot;Tok&quot;: &quot;...&quot;, &quot;Exp&quot;: unix_timestamp}  (Exp = current_time + 3300)
+    &quot;&quot;&quot;&lt;/span&gt;
+    nmid &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; nmid&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;upper&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+    namespace&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; topic_num&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; _ &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; derive_namespace&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;nmid&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+    topic &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; sb_topic&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;topic_num&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+    ts &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token builtin&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;time&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;time&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+
+    body &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; json&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;dumps&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;token string&quot;&gt;&quot;NS&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;  namespace&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;token string&quot;&gt;&quot;Top&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; topic&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;token string&quot;&gt;&quot;Exp&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; ts&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token comment&quot;&gt;# current time – matches Java: tokenRequest.TokenExpiration = currentTimeMillis&lt;/span&gt;
+    &lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+    headers &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;token string&quot;&gt;&quot;Content-Type&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;  &lt;span class=&quot;token string&quot;&gt;&quot;application/json&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;token string&quot;&gt;&quot;Authorization&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; _rarec_auth_header&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;ts&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;
+
+    resp &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; requests&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;post&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;RAREC_URL&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; headers&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;headers&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; data&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;body&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; timeout&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;http_timeout&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;token keyword&quot;&gt;return&lt;/span&gt; resp&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;json&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The token comes back with an expiry so you&#39;ll have to fetch a new token manually
+every one in a while.&lt;/p&gt;
+&lt;h3 id=&quot;the-encryption&quot;&gt;The encryption&lt;/h3&gt;
+&lt;p&gt;Every message body (from both app and controller) is AES-128-CBC encrypted. The
+key is derived with PBKDF2-HMAC-SHA1 (1000 iterations) from a session key that
+combines the password with the addressing integers:&lt;/p&gt;
+&lt;pre class=&quot;language-python&quot; tabindex=&quot;0&quot;&gt;&lt;code class=&quot;language-python&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;token function&quot;&gt;session_key&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;password&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token builtin&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; nmid&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;token builtin&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;token builtin&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+    _&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; topic_num&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; client_id &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; derive_namespace&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;nmid&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;token keyword&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;token string-interpolation&quot;&gt;&lt;span class=&quot;token string&quot;&gt;f&quot;&lt;/span&gt;&lt;span class=&quot;token interpolation&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;password&lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;token interpolation&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;client_id&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;token format-spec&quot;&gt;03X&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;token interpolation&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;topic_num&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;token format-spec&quot;&gt;04X&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The encrypted bundle packs the salt and IV at fixed offsets from the &lt;em&gt;end&lt;/em&gt;:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;ciphertext || salt(16 bytes) || padding(6 bytes) || iv(16 bytes)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;So to decrypt you slice off the last 16 bytes for the IV, the 16 bytes before
+the padding for the salt, and everything else is ciphertext.&lt;/p&gt;
+&lt;h3 id=&quot;the-packet-structure&quot;&gt;The packet structure&lt;/h3&gt;
+&lt;p&gt;Inside the encrypted envelope is a binary framing with sections and items:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;[total_len : 2 bytes LE][seq_num : 1 byte][sections...]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Each section has a service type (authenticate, read/write access, zone init,
+...) and carries a list of items. Each item is a data type byte, a 2-byte
+length, and a UTF-8 JSON string. The actual commands are BACnet (Building
+Automation and Control networks communication protocol, an ISO standard
+apparently) read/write requests serialised as JSON and packed inside this binary
+envelope, which is then encrypted and POSTed to Service Bus.&lt;/p&gt;
+&lt;p&gt;Essentially it&#39;s a REST API wrapped in a binary protocol wrapped in CBC
+encryption.&lt;/p&gt;
+&lt;h3 id=&quot;finding-the-right-objects-to-read&quot;&gt;Finding the right objects to read&lt;/h3&gt;
+&lt;p&gt;Once the transport was working I could authenticate and start poking at BACnet
+objects. My first assumption was that temperature lived in &lt;code&gt;AV1&lt;/code&gt; (Analog Value
+1). When it returned 0 I was clearly wrong (lol).&lt;/p&gt;
+&lt;p&gt;After tracing through the decompiled class that hydrates zone objects from the
+device&#39;s initialization response, I found how the app maps BACnet objects to
+zone fields:&lt;/p&gt;
+&lt;pre class=&quot;language-java&quot; tabindex=&quot;0&quot;&gt;&lt;code class=&quot;language-java&quot;&gt;hVar&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;f5451r &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; linkedHashMap2&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token function&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token class-name&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token function&quot;&gt;format&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;AV10%d01&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; zone&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;  &lt;span class=&quot;token comment&quot;&gt;// room temp&lt;/span&gt;
+hVar&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;f5446l &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; linkedHashMap2&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token function&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token class-name&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token function&quot;&gt;format&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;AV10%d02&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; zone&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;  &lt;span class=&quot;token comment&quot;&gt;// ambient temp&lt;/span&gt;
+hVar&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;f5447m &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; linkedHashMap2&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token function&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token class-name&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token function&quot;&gt;format&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;AV10%d03&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; zone&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;  &lt;span class=&quot;token comment&quot;&gt;// setpoint  ← this one&lt;/span&gt;
+hVar&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;f5445k &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; linkedHashMap2&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token function&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token class-name&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token function&quot;&gt;format&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;MSV10%d01&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; zone&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;token comment&quot;&gt;// fan / zone power&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Object&lt;/th&gt;
+&lt;th&gt;Zone 1&lt;/th&gt;
+&lt;th&gt;Meaning&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;AV10{zone}01&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;AV10101&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Room temperature (°C, read-only)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;AV10{zone}03&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;AV10103&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Setpoint (°C, read/write)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;MSV308&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;—&lt;/td&gt;
+&lt;td&gt;HVAC mode (device-level)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;MSV10{zone}01&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;MSV10101&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Fan speed + zone power&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The fan/power object doubles as both the on/off switch and the speed setting —
+there&#39;s no separate object for on/off on this device type. State 1 is on/auto, 2
+is boost, 3 is off.&lt;/p&gt;
+&lt;h3 id=&quot;talking-to-it&quot;&gt;Talking to it&lt;/h3&gt;
+&lt;p&gt;Putting it all together, authentication is a single Service Bus round-trip: POST
+an encrypted packet containing your NMID, receive back a JSON payload listing
+all zone devices and their BACnet instance numbers.&lt;/p&gt;
+&lt;pre class=&quot;language-python&quot; tabindex=&quot;0&quot;&gt;&lt;code class=&quot;language-python&quot;&gt;client &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; NetMasterRemote&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;nmid&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;mynmid&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; password&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;mypassword&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+auth &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; client&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;authenticate&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;token comment&quot;&gt;# {&#39;ZoneList&#39;: [{&#39;DevID&#39;: 20651, &#39;Name&#39;: &#39;Living Room&#39;, ...}, ...]}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;From there reading/writing a value encrypts a BACnet read/write request, POSTs
+it to Service Bus, polls the subscription for the response, decrypts it, and
+unpacks the value. After making nice wrappers for constructing the data packets
+and receiving the values back from Azure Service Bus, it was a breeze:&lt;/p&gt;
+&lt;pre class=&quot;language-python&quot; tabindex=&quot;0&quot;&gt;&lt;code class=&quot;language-python&quot;&gt;&lt;span class=&quot;token comment&quot;&gt;# Room temperature and setpoint&lt;/span&gt;
+temp    &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; client&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;bacread&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;20651&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;AV10101&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;   &lt;span class=&quot;token comment&quot;&gt;# → 23.4&lt;/span&gt;
+setpoint &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; client&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;bacread&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;20651&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;AV10103&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;  &lt;span class=&quot;token comment&quot;&gt;# → 21.0&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&quot;language-python&quot; tabindex=&quot;0&quot;&gt;&lt;code class=&quot;language-python&quot;&gt;client&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;bacwrite&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;20651&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;AV10103&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;22.0&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;  &lt;span class=&quot;token comment&quot;&gt;# set temperature&lt;/span&gt;
+client&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;bacwrite&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;20651&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;MSV10101&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;    &lt;span class=&quot;token comment&quot;&gt;# fan boost&lt;/span&gt;
+client&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;bacwrite&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;20651&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;MSV10101&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;    &lt;span class=&quot;token comment&quot;&gt;# turn zone off&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&quot;is-it-working&quot;&gt;Is it working?&lt;/h3&gt;
+&lt;p&gt;Yes. Both FCUs respond to commands and the status reads look correct. But boy
+was it a pain. I&#39;d rather just have a thermostat with a dial on the wall or
+something.&lt;/p&gt;
+&lt;p&gt;But in the end, I ended up writing a nice Home Assistant integration that lets me
+read out the temperature sensors in each room and set the temperature. That
+tablet can just stay in the closet and I can now automate my heating and cooling :)&lt;/p&gt;
+&lt;/body&gt;&lt;/html&gt;</content>
+  </entry>
   <entry>
     <title>Code as a medium of thought</title>
     <link href="https://raka.gunar.to/blog/2026/03/05/code-as-medium-of-thought/" />
