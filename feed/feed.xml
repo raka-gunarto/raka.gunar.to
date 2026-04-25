@@ -165,7 +165,7 @@ hVar&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;f5445k &lt;spa
 &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
-&lt;p&gt;The fan/power object doubles as both the on/off switch and the speed setting —
+&lt;p&gt;The fan/power object doubles as both the on/off switch and the speed setting as
 there&#39;s no separate object for on/off on this device type. State 1 is on/auto, 2
 is boost, 3 is off.&lt;/p&gt;
 &lt;h3 id=&quot;talking-to-it&quot;&gt;Talking to it&lt;/h3&gt;
@@ -189,9 +189,10 @@ client&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;bacwrite&lt;
 &lt;p&gt;Yes. Both FCUs respond to commands and the status reads look correct. But boy
 was it a pain. I&#39;d rather just have a thermostat with a dial on the wall or
 something.&lt;/p&gt;
-&lt;p&gt;But in the end, I ended up writing a nice Home Assistant integration that lets me
-read out the temperature sensors in each room and set the temperature. That
-tablet can just stay in the closet and I can now automate my heating and cooling :)&lt;/p&gt;
+&lt;p&gt;But in the end, I ended up writing a nice Home Assistant integration that lets
+me read out the temperature sensors in each room and set the temperature. That
+tablet can just stay in the closet and I can now automate my heating and cooling
+:)&lt;/p&gt;
 &lt;/body&gt;&lt;/html&gt;</content>
   </entry>
   <entry>
