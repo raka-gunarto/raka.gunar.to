@@ -19,10 +19,8 @@ I frequently create things in my spare time, many of which can be found on my [G
 I'm currently in my early career as a software engineer. I love learning new things, and finding 
 new people to learn new things from.
 
-My current role is at EnQuest, where I work as a software engineer within an operations
-focused organisation. In practice, this means taking end-to-end ownership of internal engineering
-work. I work on various projects which ranges from building AI assisted search with their data
-to experimenting with machine learning to assist in their operations.
+My current role is at Motion Applied, where I work as a software engineer on
+a platform that deals with the mountain of data coming out of their ECUs.
 
 More broadly, I enjoy working on (positively) impactful wide-reaching projects alongside
 a high-performing team. I want to work alongside truly passionate people who care about
